@@ -10,8 +10,6 @@ import { EffectComposer } from 'postprocessing';
 import { RenderPass } from 'postprocessing';
 import { BloomEffect } from 'postprocessing';
 
-// coment 
-
 const ThreejsOLD = () => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
