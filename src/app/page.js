@@ -18,25 +18,20 @@ const ThreejsOLD = () => {
   const DlightRef = useRef(null);
   // const planeRef = useRef(null); 
   const [modelFile, setModelFile] = useState(null);
-  const [model, setModel] = useState(null); 
+  const [model, setModel] = useState(null);
   const [defaultModel, setDefaultModel] = useState(null);
   const [lightPosition, setLightPosition] = useState({ x: -4, y: 4, z: 5 });
-  const [shadowOpacity, setShadowOpacity] = useState(0.3);
-  const [shadowBlur, setShadowBlur] = useState(2);
   const [selectedMesh, setSelectedMesh] = useState(null);
   const [modelBounds, setModelBounds] = useState(null);
+
   const [selectedColorMesh, setSelectedColorMesh] = useState(null);
-  const [colorChanged, setColorChanged] = useState(false);
+  const [currentColor, setCurrentColor] = useState("#000000");
 
   const [colorableMeshes, setColorableMeshes] = useState([]);
 
 
-
-
-  // save position and color
-  const [saveCam, setsaveCam] = useState([]);
   const [saveColour, setsaveColour] = useState([]);
-  //---------------------------------------
+
   const [zoom, setZoom] = useState(50);
   const [radius, setRadius] = useState(5.5);
   const [azimuth, setAzimuth] = useState(1.57);
@@ -63,7 +58,7 @@ const ThreejsOLD = () => {
     scene.background = new THREE.Color("#c0c0c0");
     sceneRef.current = scene;
 
-    let camera = new THREE.PerspectiveCamera(20, currentMount.clientWidth / currentMount.clientHeight, 0.01, 10000);
+    let camera = new THREE.PerspectiveCamera(20, currentMount.clientWidth / currentMount.clientHeight, 0.1, 10000);
     camera.position.set(0, 0, 5.5);
     camera.rotation.set(0, 0, 0);
 
@@ -123,7 +118,7 @@ const ThreejsOLD = () => {
     Dlight.shadow.camera.near = 0.01;
     Dlight.shadow.camera.far = 50; // Set a fixed shadow depth
     Dlight.shadow.bias = -0.0001; // Reduce shadow artifacts
-    Dlight.shadow.radius = shadowBlur;
+    // Dlight.shadow.radius = shadowBlur;
 
 
     scene.add(Dlight);
@@ -152,10 +147,7 @@ const ThreejsOLD = () => {
     loader.setDRACOLoader(dracoLoader);
     const loadModel = (gltf) => {
 
-      if (gltf.cameras.length > 0) {
-        let cam = gltf.cameras[0];
-        camera = cam;
-      }
+
 
       if (isGlossy == true) {
 
@@ -403,14 +395,11 @@ const ThreejsOLD = () => {
       if (modelRef.current && pivotRef.current) {
         // Rotate only on one axis at a time
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          // Lock vertical movement and rotate around Y-axis (horizontal)
-          pivotRef.current.rotation.y += deltaX * 0.01; // Rotate around Y-axis (horizontal)
+          pivotRef.current.rotation.y += deltaX * 0.01;      // Rotate around Y-axis (horizontal)
         } else {
-          // Lock horizontal movement and rotate around X-axis (vertical)
-          pivotRef.current.rotation.x += deltaY * 0.01; // Rotate around X-axis (vertical)
+          pivotRef.current.rotation.x += deltaY * 0.01;      // Rotate around X-axis (vertical)
         }
       }
-
       // Update last mouse position
       setLastMousePos({ x: event.clientX, y: event.clientY });
     };
@@ -432,16 +421,14 @@ const ThreejsOLD = () => {
       canvas.addEventListener('mousemove', onMouseMove);
     }
 
-    if(!mouseControls && pivotRef.current){
+    if (!mouseControls && pivotRef.current) {
       canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('mousemove', onMouseMove);
 
       pivotRef.current.rotation.x = 0;
-      pivotRef.current.rotation.y =0;
+      pivotRef.current.rotation.y = 0;
     }
-
-    
 
     return () => {
       // Clean up event listeners when component unmounts
@@ -455,21 +442,21 @@ const ThreejsOLD = () => {
   }, [isMouseDown, lastMousePos, mouseControls]);
 
   useEffect(() => {
-    if(mouseControls){
+    if (mouseControls) {
       handelResetPosition();
     }
-  },[mouseControls])
+  }, [mouseControls])
 
 
   const handleFileChange = (event) => {
     setModelFile(event.target.files[0]);
     setSelectedMesh(null);
-    setColorChanged(false); // Reset color changed flag for new model
+    handelResetPosition();
+    // setColorChanged(false);
   };
 
   const handleMeshSelection = (event) => {
     const selectedMeshName = event.target.value;
-
     if (model) {
       const mesh = model.getObjectByName(selectedMeshName);
       setSelectedMesh(mesh);
@@ -526,22 +513,6 @@ const ThreejsOLD = () => {
     renderer.setSize(width, height);
   };
 
-  const handleLightPositionChange = (axis, value) => {
-    setLightPosition((prev) => {
-      const newPosition = { ...prev, [axis]: value };
-      if (DlightRef.current) {
-        DlightRef.current.position.set(
-          newPosition.x,
-          newPosition.y,
-          newPosition.z
-        );
-        DlightRef.current.target.position.set(0, 0, 0);
-      }
-      return newPosition;
-    });
-  };
-
-
   // const updatePlanePosition = (bounds) => {
   //   if (!planeRef.current || !bounds) return;
 
@@ -553,7 +524,7 @@ const ThreejsOLD = () => {
   //------------------------------------------new changes-------------------------------------------------
   const handleColorChange = (event) => {
     const newColor = event.target.value;
-    console.log(newColor);
+    setCurrentColor(newColor);
 
     if (selectedColorMesh && selectedColorMesh.isMesh) {
       if (Array.isArray(selectedColorMesh.material)) {
@@ -578,64 +549,13 @@ const ThreejsOLD = () => {
   // save position of camera and light
   const handleColorMeshSelect = (event) => {
     const meshName = event.target.value;
-    // const selected = colorableMeshes.find((mesh) => mesh.name === meshName);
     const mesh = model.getObjectByName(meshName);
-
     setSelectedColorMesh(mesh);
+    if (mesh && mesh.material && mesh.material.color) {
+      setCurrentColor('#' + mesh.material.color.getHexString());
+    }
   };
 
-
-
-  // const handleZoomChange = (event) => {
-  //   const newZoom = parseInt(event.target.value);
-
-  //   setZoom(newZoom);
-  //   const newRadius = 10 - (newZoom / 11);
-  //   setRadius(newRadius);
-
-  //   // Recalculate position using current angles and new radius
-  //   const x = newRadius * Math.sin(polar) * Math.cos(azimuth);
-  //   const z = newRadius * Math.sin(polar) * Math.sin(azimuth);
-  //   const y = newRadius * Math.cos(polar);
-
-  //   // Update camera position
-  //   cameraRef.current.position.set(x, y, z);
-  //   cameraRef.current.lookAt(0, 0, 0);
-  //   cameraRef.current.rotation.z = camrotation;
-  // };
-
-  // const handleAzimuthChange = (event) => {
-
-  //   const angle = parseFloat(event.target.value) * Math.PI / 180;
-  //   setAzimuth(angle);
-  //   // Calculate new position on sphere
-  //   const x = radius * Math.sin(polar) * Math.cos(angle);
-  //   const z = radius * Math.sin(polar) * Math.sin(angle);
-  //   const y = radius * Math.cos(polar);
-
-  //   cameraRef.current.position.set(x, y, z);
-  //   cameraRef.current.lookAt(0, 0, 0);
-  //   cameraRef.current.rotation.z = camrotation;
-  // };
-
-  // const handlePolarChange = (event) => {
-  //   const angle = parseFloat(event.target.value) * Math.PI / 180;
-  //   setPolar(angle);
-  //   // Calculate new position on sphere
-  //   const x = radius * Math.sin(angle) * Math.cos(azimuth);
-  //   const z = radius * Math.sin(angle) * Math.sin(azimuth);
-  //   const y = radius * Math.cos(angle);
-
-  //   cameraRef.current.position.set(x, y, z);
-  //   cameraRef.current.lookAt(0, 0, 0);
-  //   cameraRef.current.rotation.z = camrotation;
-  // };
-
-  // const handelCameraRotation = (event) => {
-  //   let val = parseFloat(event.target.value);
-  //   cameraRef.current.rotation.z = val;
-  //   setcamrotation(val);
-  // }
 
   const handleZoomChange = (event) => {
     const newZoom = parseInt(event.target.value);
@@ -644,43 +564,37 @@ const ThreejsOLD = () => {
     setRadius(newRadius);
     updateCameraPosition(newRadius, polar, azimuth, camrotation);
   };
-  
+
   const handleAzimuthChange = (event) => {
     const angle = parseFloat(event.target.value) * Math.PI / 180;
     setAzimuth(angle);
     updateCameraPosition(radius, polar, angle, camrotation);
   };
-  
+
   const handlePolarChange = (event) => {
     const angle = parseFloat(event.target.value) * Math.PI / 180;
     setPolar(angle);
     updateCameraPosition(radius, angle, azimuth, camrotation);
   };
-  
+
   const handelCameraRotation = (event) => {
     const val = parseFloat(event.target.value);
     setcamrotation(val);
     updateCameraPosition(radius, polar, azimuth, val);
   };
-  
-  // Helper function to update camera position and rotation
+
   const updateCameraPosition = (r, p, a, rotation) => {
     if (!cameraRef.current) return;
-  
+
     // Calculate camera position on sphere
     const x = r * Math.sin(p) * Math.cos(a);
     const z = r * Math.sin(p) * Math.sin(a);
     const y = r * Math.cos(p);
-  
-    // Update camera position
+
     cameraRef.current.position.set(x, y, z);
-    
-    // Make camera look at center
     cameraRef.current.lookAt(0, 0, 0);
-    
-    // Apply rotation after lookAt
     cameraRef.current.rotateZ(rotation);
-    
+
     // Update camera matrix
     cameraRef.current.updateMatrix();
     cameraRef.current.updateMatrixWorld();
@@ -766,7 +680,7 @@ const ThreejsOLD = () => {
     let model = modelRef.current;
     let value = parseFloat(event.target.value);
     let mesh = selectedColorMesh;
-    setModelOpacity(value);  // Track opacity value
+    setModelOpacity(value);
 
     if (model && mesh) {
       mesh.traverse((child) => {
@@ -861,7 +775,7 @@ const ThreejsOLD = () => {
               </select>
               <input
                 type="color"
-                value={colorChanged}
+                value={currentColor}
                 onChange={handleColorChange}
                 disabled={!selectedColorMesh}
                 style={{ verticalAlign: "middle" }}
@@ -1005,9 +919,9 @@ const ThreejsOLD = () => {
           </button>
 
           <br></br>
-          <button style={{ margin: "10px" }} onClick={()=>setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
+          <button style={{ margin: "10px" }} onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
           <br></br>
-          <button style={{ margin: "10px" }} onClick={()=>handelResetPosition()} >Reset Position </button>
+          <button style={{ margin: "10px" }} onClick={() => handelResetPosition()} >Reset Position </button>
 
         </div>
         <div
