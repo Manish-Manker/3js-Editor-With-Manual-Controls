@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-import { EffectComposer } from 'postprocessing';
-import { RenderPass } from 'postprocessing';
-import { BloomEffect } from 'postprocessing';
+
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
 
 const ThreejsOLD = () => {
   const mountRef = useRef(null);
@@ -16,11 +16,9 @@ const ThreejsOLD = () => {
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
   const DlightRef = useRef(null);
-  // const planeRef = useRef(null); 
   const [modelFile, setModelFile] = useState(null);
   const [model, setModel] = useState(null);
   const [defaultModel, setDefaultModel] = useState(null);
-  const [lightPosition, setLightPosition] = useState({ x: -4, y: 4, z: 5 });
   const [selectedMesh, setSelectedMesh] = useState(null);
   const [modelBounds, setModelBounds] = useState(null);
 
@@ -28,28 +26,26 @@ const ThreejsOLD = () => {
   const [currentColor, setCurrentColor] = useState("#000000");
 
   const [colorableMeshes, setColorableMeshes] = useState([]);
-
-
   const [saveColour, setsaveColour] = useState([]);
 
   const [zoom, setZoom] = useState(50);
   const [radius, setRadius] = useState(5.5);
   const [azimuth, setAzimuth] = useState(1.57);
   const [polar, setPolar] = useState(Math.PI / 2);
-
   const [rendersize, setrendersize] = useState();
 
   const modelRef = useRef(null);
   const [modelMatenees, setmodelMatenees] = useState(0);
   const [modelRoughness, setmodelRoughness] = useState(0);
-  const [modelTransmission, setModelTransmission] = useState(1);
   const [modelOpacity, setModelOpacity] = useState(1.0);
 
   const [isGlossy, setIsGlossy] = useState(true);
-
-  let [camrotation, setcamrotation] = useState(0);
+  const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
+
+  const [useOrbitControls, setUseOrbitControls] = useState(false);
+  const controlsRef = useRef(null);
 
   useEffect(() => {
     const currentMount = mountRef.current;
@@ -107,47 +103,11 @@ const ThreejsOLD = () => {
       pmremGenerator.dispose();
     })
 
-    const Dlight = new THREE.DirectionalLight('#ffffff', 0);
-    Dlight.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
-    Dlight.castShadow = false;
-    Dlight.target.position.set(0, 0, 0);
-    scene.add(Dlight.target);
-
-    Dlight.shadow.mapSize.width = 2048;
-    Dlight.shadow.mapSize.height = 2048;
-    Dlight.shadow.camera.near = 0.01;
-    Dlight.shadow.camera.far = 50; // Set a fixed shadow depth
-    Dlight.shadow.bias = -0.0001; // Reduce shadow artifacts
-    // Dlight.shadow.radius = shadowBlur;
-
-
-    scene.add(Dlight);
-    DlightRef.current = Dlight;
-
-
-    // const planeGeometry = new THREE.PlaneGeometry(2048, 2048);
-    // const planeMaterial = new THREE.ShadowMaterial({
-    //   opacity: shadowOpacity
-    // });
-    // const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    // plane.rotation.x = -Math.PI / 2;
-    // plane.receiveShadow = true;
-
-    // planeRef.current = plane;
-
-    // Initial position - will be updated when model loads
-    // if (modelBounds) {
-    //   updatePlanePosition(modelBounds);
-    // }
-    // scene.add(plane);
-
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("draco/");
     loader.setDRACOLoader(dracoLoader);
     const loadModel = (gltf) => {
-
-
 
       if (isGlossy == true) {
 
@@ -229,9 +189,6 @@ const ThreejsOLD = () => {
         });
       }
 
-
-      // scene.add(gltf.scene);
-
       const pivot = new THREE.Group();
       pivot.add(gltf.scene);
 
@@ -245,13 +202,8 @@ const ThreejsOLD = () => {
       const center = box.getCenter(new THREE.Vector3());
       gltf.scene.position.sub(center);
 
-
       setModelBounds(box);
 
-      // Update plane position based on new bounds
-      // if (planeRef.current) {
-      //   updatePlanePosition(box);
-      // }
       return gltf.scene;
     };
 
@@ -260,7 +212,6 @@ const ThreejsOLD = () => {
         const modelScene = loadModel(gltf);
         setDefaultModel(modelScene);
         setModel(modelScene);
-
       });
     }
 
@@ -272,7 +223,6 @@ const ThreejsOLD = () => {
 
       const reader = new FileReader();
       reader.onload = (event) => {
-
         loader.parse(event.target.result, "", (gltf) => {
           const modelScene = loadModel(gltf);
           setModel(modelScene);
@@ -281,19 +231,19 @@ const ThreejsOLD = () => {
       reader.readAsArrayBuffer(modelFile);
     }
 
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-
-    const bloomEffect = new BloomEffect({
-      intensity: 1.5, // Adjust the intensity of the blur
-      kernelSize: 5, // Adjust the blur kernel size
-      luminanceThreshold: 0.1
-    });
-    composer.addPass(bloomEffect);
-
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enabled = useOrbitControls;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.5;
+    controls.minDistance = 2;
+    controls.maxDistance = 30;
+    controlsRef.current = controls;
 
     const animate = () => {
       requestAnimationFrame(animate);
+      if (controlsRef.current && useOrbitControls) {
+        controls.update();
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -301,7 +251,6 @@ const ThreejsOLD = () => {
     const handleResize = () => {
       const width = currentMount.clientWidth;
       const height = currentMount.clientHeight;
-
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
@@ -313,52 +262,22 @@ const ThreejsOLD = () => {
       if (currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+      }
       window.removeEventListener("resize", handleResize);
       setDefaultModel(null);
       scene.remove(modelRef.current);
       modelRef.current = null;
-      composer.dispose();
-      bloomEffect.dispose();
       renderer.dispose();
     };
-  }, [modelFile, isGlossy]); //isGlossy  
-
-  useEffect(() => {
-    if (DlightRef.current) {
-      DlightRef.current.position.set(
-        lightPosition.x,
-        lightPosition.y,
-        lightPosition.z
-      );
-      DlightRef.current.lookAt(0, 0, 0)
-    }
-
-  }, [lightPosition]);
-
-  // useEffect(() => {
-  //   if (planeRef.current) {
-  //     planeRef.current.material.opacity = shadowOpacity;
-  //   }
-  // }, [shadowOpacity]);
-
-  // useEffect(() => {
-  //   if (planeRef.current) {
-  //     planeRef.current.material.needsUpdate = true;
-  //   }
-  // }, [shadowBlur]);
+  }, [modelFile, isGlossy]);
 
   useEffect(() => {
     if (model) {
       setSelectedMesh(null);
     }
   }, [model]);
-
-  // useEffect(() => {
-  //   if (modelBounds) {
-  //     updatePlanePosition(modelBounds);
-  //   }
-  // }, [modelBounds]);
-
 
   useEffect(() => {
     if (model) {
@@ -385,6 +304,7 @@ const ThreejsOLD = () => {
   const [mouseControls, setMouseControls] = useState(false);
 
   useEffect(() => {
+    if (useOrbitControls) return; // Prevent mouse controls when orbit is active
     const onMouseMove = (event) => {
       if (!isMouseDown) return;
 
@@ -439,14 +359,33 @@ const ThreejsOLD = () => {
         canvas.removeEventListener('mousemove', onMouseMove);
       }
     };
-  }, [isMouseDown, lastMousePos, mouseControls]);
+  }, [isMouseDown, lastMousePos, mouseControls, useOrbitControls]);
 
   useEffect(() => {
     if (mouseControls) {
       handelResetPosition();
     }
-  }, [mouseControls])
+  }, [mouseControls]);
 
+  useEffect(() => {
+    if(controlsRef.current) {
+      cameraRef.current.position.set(0, 0, 5.5);
+    cameraRef.current.rotation.set(0, 0, 0);
+    }
+  }, [useOrbitControls]);
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = useOrbitControls;
+
+      // Disable other controls when OrbitControls is active
+      if (useOrbitControls) {
+        setMouseControls(false);
+        // Reset camera parameters to avoid conflicts
+        handelResetPosition();
+      }
+    }
+  }, [useOrbitControls]);
 
   const handleFileChange = (event) => {
     setModelFile(event.target.files[0]);
@@ -513,14 +452,6 @@ const ThreejsOLD = () => {
     renderer.setSize(width, height);
   };
 
-  // const updatePlanePosition = (bounds) => {
-  //   if (!planeRef.current || !bounds) return;
-
-  //   const modelHeight = bounds.max.y - bounds.min.y;
-  //   const offset = modelHeight * 0.5;
-  //   planeRef.current.position.y = bounds.min.y - offset;
-  // };
-
   //------------------------------------------new changes-------------------------------------------------
   const handleColorChange = (event) => {
     const newColor = event.target.value;
@@ -584,7 +515,7 @@ const ThreejsOLD = () => {
   };
 
   const updateCameraPosition = (r, p, a, rotation) => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current || useOrbitControls) return; // Skip if orbit controls active
 
     // Calculate camera position on sphere
     const x = r * Math.sin(p) * Math.cos(a);
@@ -609,8 +540,6 @@ const ThreejsOLD = () => {
     updateCameraPosition(5.5, Math.PI / 2, 1.57, 0);
   };
 
-
-
   const handelHDR = (event) => {
     const file = event?.target?.files[0];
 
@@ -628,7 +557,6 @@ const ThreejsOLD = () => {
         pmremGenerator.dispose();
       });
     }
-
   };
 
 
@@ -702,12 +630,6 @@ const ThreejsOLD = () => {
       });
     }
   };
-
-
-
-
-
-
 
   return (
     <>
@@ -812,6 +734,7 @@ const ThreejsOLD = () => {
               min="0"
               max="2"
               step={0.01}
+              disabled={!selectedColorMesh}
               value={modelMatenees}
               onChange={handelMetalnessChange}
             />
@@ -825,13 +748,12 @@ const ThreejsOLD = () => {
               min="0"
               max="1"
               step={0.01}
+              disabled={!selectedColorMesh}
               value={modelRoughness}
               onChange={handelRoughnessChange}
             />
             {" " + parseInt(modelRoughness * 100) + '%'}
           </div>
-
-
 
           <div style={{ margin: '10px' }}>
             <label> Opacity </label>
@@ -840,6 +762,7 @@ const ThreejsOLD = () => {
               min="0"
               max="1.0"
               step={0.1}
+              disabled={!selectedColorMesh}
               value={modelOpacity}
               onChange={handleOpacityChange}
             />
@@ -866,7 +789,7 @@ const ThreejsOLD = () => {
               min="1"
               max="100"
               step='1'
-              // disabled={mouseControls}
+              disabled={useOrbitControls}
               value={zoom}
               onChange={handleZoomChange}
             />
@@ -879,7 +802,7 @@ const ThreejsOLD = () => {
               type="range"
               min="0"
               max="360"
-              disabled={mouseControls}
+              disabled={mouseControls || useOrbitControls}
               value={azimuth * 180 / Math.PI}
               onChange={handleAzimuthChange}
             />
@@ -891,7 +814,7 @@ const ThreejsOLD = () => {
               type="range"
               min="0"
               max="180"
-              disabled={mouseControls}
+              disabled={mouseControls || useOrbitControls}
               value={polar * 180 / Math.PI}
               onChange={handlePolarChange}
             />
@@ -904,7 +827,7 @@ const ThreejsOLD = () => {
               min="0"
               max="6.28"
               step='0.01'
-              disabled={mouseControls}
+              disabled={mouseControls || useOrbitControls}
               value={camrotation}
               onChange={(e) => handelCameraRotation(e)}
             />
@@ -919,8 +842,20 @@ const ThreejsOLD = () => {
           </button>
 
           <br></br>
-          <button style={{ margin: "10px" }} onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
+          <button style={{ margin: "10px" }} disabled={useOrbitControls}
+           onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
           <br></br>
+
+          <button
+            style={{ margin: "10px" }}
+            onClick={() => setUseOrbitControls(!useOrbitControls)}
+            disabled={mouseControls}
+          >
+            Orbit Controls {useOrbitControls ? 'on' : 'off'}
+          </button>
+
+          <br></br>
+
           <button style={{ margin: "10px" }} onClick={() => handelResetPosition()} >Reset Position </button>
 
         </div>
