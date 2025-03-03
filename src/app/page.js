@@ -9,7 +9,6 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-
 const ThreejsOLD = () => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -43,7 +42,6 @@ const ThreejsOLD = () => {
   const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
-
   const [useOrbitControls, setUseOrbitControls] = useState(false);
   const controlsRef = useRef(null);
 
@@ -114,17 +112,17 @@ const ThreejsOLD = () => {
         gltf.scene.traverse((child) => {
           const Pmaterial = new THREE.MeshPhysicalMaterial({
             // Ensure transparency and glass effect
-            transmission: 0,  // Fully transparent
-            roughness: 0,     // Smooth surface for reflections
-            metalness: 0,     // No metallic effect for plastic
-            ior: 1.5,         // Glass-like refraction
-            clearcoat: 0.4,     // Adds a shiny, glassy finish
-            clearcoatRoughness: 0.1, // Smooth clearcoat finish
-            thickness: 1,   // Adjust thickness if needed
-            opacity: 1,       // Keep it fully opaque (even if transparent)
+            transmission: 0,
+            roughness: 0,
+            metalness: 0,
+            ior: 1.5,
+            clearcoat: 0.4,
+            clearcoatRoughness: 0.1,
+            thickness: 1,
+            opacity: 1,
             transparent: true,
-            specularColor: '#FEFEFE', // Reflective highlight
-            emissiveIntensity: 0,  // No emissive effect for a realistic glass
+            specularColor: '#FEFEFE',
+            emissiveIntensity: 0,
             aoMapIntensity: 1,
             side: 0,
             emissive: "#000000",
@@ -140,8 +138,8 @@ const ThreejsOLD = () => {
 
           if (child.material) {
             // Set other attributes for a glassy effect
-            child.material.normalMapType = 0;  // Use no normal map if you want a smooth surface
-            child.material.sheen = 0;  // No sheen effect for plastic
+            child.material.normalMapType = 0;
+            child.material.sheen = 0;
             child.material.depthFunc = 3;
             child.material.depthWrite = true;
             child.material.needsUpdate = true;
@@ -257,12 +255,12 @@ const ThreejsOLD = () => {
     };
     window.addEventListener("resize", handleResize);
     handleResize();
-
+    setUseOrbitControls(true);
     return () => {
       if (currentMount) {
         currentMount.removeChild(renderer.domElement);
       }
-      if (controlsRef.current) {
+      if (controlsRef.current && useOrbitControls) {
         controlsRef.current.dispose();
       }
       window.removeEventListener("resize", handleResize);
@@ -333,21 +331,36 @@ const ThreejsOLD = () => {
       setIsMouseDown(false);
     };
 
+    const onMouseScroll = (event) => {
+      if (modelRef.current && pivotRef.current) {
+        if (event.deltaY > 0) {
+          pivotRef.current.position.z -= 0.3; // Zoom out
+        } else {
+          pivotRef.current.position.z += 0.3; // Zoom in
+        }
+      }
+
+    }
+
+
     // Attach mouse events to the canvas, not the window
     const canvas = mountRef.current;
     if (canvas && mouseControls) {
       canvas.addEventListener('mousedown', onMouseDown);
       canvas.addEventListener('mouseup', onMouseUp);
       canvas.addEventListener('mousemove', onMouseMove);
+      canvas.addEventListener('wheel', onMouseScroll);
     }
 
     if (!mouseControls && pivotRef.current) {
       canvas.removeEventListener('mousedown', onMouseDown);
       canvas.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('wheel', onMouseScroll);
 
       pivotRef.current.rotation.x = 0;
       pivotRef.current.rotation.y = 0;
+      pivotRef.current.position.z = 0;
     }
 
     return () => {
@@ -357,6 +370,7 @@ const ThreejsOLD = () => {
         canvas.removeEventListener('mousedown', onMouseDown);
         canvas.removeEventListener('mouseup', onMouseUp);
         canvas.removeEventListener('mousemove', onMouseMove);
+        canvas.removeEventListener('wheel', onMouseScroll);
       }
     };
   }, [isMouseDown, lastMousePos, mouseControls, useOrbitControls]);
@@ -368,9 +382,9 @@ const ThreejsOLD = () => {
   }, [mouseControls]);
 
   useEffect(() => {
-    if(controlsRef.current) {
+    if (controlsRef.current) {
       cameraRef.current.position.set(0, 0, 5.5);
-    cameraRef.current.rotation.set(0, 0, 0);
+      cameraRef.current.rotation.set(0, 0, 0);
     }
   }, [useOrbitControls]);
 
@@ -453,6 +467,7 @@ const ThreejsOLD = () => {
   };
 
   //------------------------------------------new changes-------------------------------------------------
+
   const handleColorChange = (event) => {
     const newColor = event.target.value;
     setCurrentColor(newColor);
@@ -471,7 +486,6 @@ const ThreejsOLD = () => {
       ) {
         selectedColorMesh.material.color.setStyle(newColor);
         selectedColorMesh.material.needsUpdate = true;
-
         setsaveColour([...saveColour, { selectedColorMesh, newColor }]);  // save the colour with mesh
       }
     }
@@ -789,7 +803,7 @@ const ThreejsOLD = () => {
               min="1"
               max="100"
               step='1'
-              disabled={useOrbitControls}
+              disabled={mouseControls || useOrbitControls}
               value={zoom}
               onChange={handleZoomChange}
             />
@@ -834,28 +848,24 @@ const ThreejsOLD = () => {
             {" " + camrotation}
           </div>
 
-
-          <button
-            onClick={() => handleDownloadImage("png")}
+          <button onClick={() => handleDownloadImage("png")}
             style={{ margin: "10px" }}>
             Download PNG
           </button>
 
           <br></br>
           <button style={{ margin: "10px" }} disabled={useOrbitControls}
-           onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
+            onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
           <br></br>
 
           <button
             style={{ margin: "10px" }}
             onClick={() => setUseOrbitControls(!useOrbitControls)}
             disabled={mouseControls}
-          >
-            Orbit Controls {useOrbitControls ? 'on' : 'off'}
+          >Orbit Controls {useOrbitControls ? 'on' : 'off'}
           </button>
 
           <br></br>
-
           <button style={{ margin: "10px" }} onClick={() => handelResetPosition()} >Reset Position </button>
 
         </div>

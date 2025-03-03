@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "next": "15.1.4",
+    "pica": "^9.0.1",
     "postprocessing": "^6.36.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
