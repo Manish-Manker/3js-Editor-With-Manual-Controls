@@ -6,7 +6,6 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const ThreejsOLD = () => {
@@ -14,7 +13,6 @@ const ThreejsOLD = () => {
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
-  const DlightRef = useRef(null);
   const [modelFile, setModelFile] = useState(null);
   const [model, setModel] = useState(null);
   const [defaultModel, setDefaultModel] = useState(null);
@@ -44,6 +42,14 @@ const ThreejsOLD = () => {
   const pivotRef = useRef(null);
   const [useOrbitControls, setUseOrbitControls] = useState(false);
   const controlsRef = useRef(null);
+
+  const [saveposition, setsaveposition] = useState({});
+
+  const DlightRef = useRef(null);
+  const [lightOn, setLightOn] = useState(false);
+  const [lightColor, setLightColor] = useState("#ffffff");
+  const [lightIntensity, setLightIntensity] = useState(1.0);
+  const [lightPosition, setLightPosition] = useState({ x: -4, y: 4, z: 5 });
 
   useEffect(() => {
     const currentMount = mountRef.current;
@@ -100,6 +106,14 @@ const ThreejsOLD = () => {
       texture.dispose();
       pmremGenerator.dispose();
     })
+
+    let Intensity = lightOn ? lightIntensity : 0;
+    const Dlight = new THREE.DirectionalLight(lightColor, Intensity);
+    Dlight.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+    Dlight.target.position.set(0, 0, 0);
+    scene.add(Dlight.target);
+    scene.add(Dlight);
+    DlightRef.current = Dlight;
 
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
@@ -295,8 +309,6 @@ const ThreejsOLD = () => {
     }
   }, [model]);
 
-  // mouse constrols 
-
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [mouseControls, setMouseControls] = useState(false);
@@ -466,8 +478,6 @@ const ThreejsOLD = () => {
     renderer.setSize(width, height);
   };
 
-  //------------------------------------------new changes-------------------------------------------------
-
   const handleColorChange = (event) => {
     const newColor = event.target.value;
     setCurrentColor(newColor);
@@ -500,7 +510,6 @@ const ThreejsOLD = () => {
       setCurrentColor('#' + mesh.material.color.getHexString());
     }
   };
-
 
   const handleZoomChange = (event) => {
     const newZoom = parseInt(event.target.value);
@@ -573,7 +582,6 @@ const ThreejsOLD = () => {
     }
   };
 
-
   const handelMetalnessChange = (event) => {
 
     let model = modelRef.current;
@@ -645,10 +653,44 @@ const ThreejsOLD = () => {
     }
   };
 
+  const handelLightOn = (val) => {
+    if (val) {
+      DlightRef.current.intensity = lightIntensity;
+    } else {
+      DlightRef.current.intensity = 0;
+    }
+    setLightOn(val);
+  };
+
+  const handelLightColour = (val) => {
+    const color = new THREE.Color(val);
+    DlightRef.current.color = color;
+    setLightColor(val);
+  };
+
+  const handleLightPositionChange = (axis, value) => {
+    setLightPosition((prev) => {
+      const newPosition = { ...prev, [axis]: value };
+      if (DlightRef.current) {
+        DlightRef.current.position.set(
+          newPosition.x,
+          newPosition.y,
+          newPosition.z
+        );
+        DlightRef.current.target.position.set(0, 0, 0);
+      }
+      return newPosition;
+    });
+  };
+
+  const handelLightIntensity = (val) => {
+    DlightRef.current.intensity = val;
+    setLightIntensity(val);
+  }
+
   return (
     <>
       <div style={{ display: "flex", alignContent: "space-between", height: "100vh", width: "140vh", padding: "10px" }}>
-
         <div style={{ padding: "10px", fontFamily: "Arial, sans-serif" }}>
           <label>
             Select Model :
@@ -667,8 +709,7 @@ const ThreejsOLD = () => {
               Select Mesh:
               <select
                 onChange={handleMeshSelection}
-                style={{ marginLeft: "10px" }}
-              >
+                style={{ marginLeft: "10px" }}>
                 <option>select mesh</option>
                 {model &&
                   model.children
@@ -692,22 +733,19 @@ const ThreejsOLD = () => {
             />
           </div>
 
-
           <div style={{ marginBottom: "10px" }}>
             <label>
               Select Mesh to colour:
               <select
                 onChange={handleColorMeshSelect}
                 style={{ marginLeft: "10px", marginRight: "10px" }}
-                value={selectedColorMesh?.name || ""}
-              >
+                value={selectedColorMesh?.name || ""}>
                 <option value="">Select mesh</option>
                 {colorableMeshes.map((mesh) => (
                   <option key={mesh.name} value={mesh.name}>
                     {mesh.name}
                   </option>
                 ))}
-
               </select>
               <input
                 type="color"
@@ -725,8 +763,7 @@ const ThreejsOLD = () => {
               <select
                 onChange={handleColorMeshSelect}
                 style={{ marginLeft: "10px", marginRight: "10px" }}
-                value={selectedColorMesh?.name || ""}
-              >
+                value={selectedColorMesh?.name || ""}>
                 <option>select mesh</option>
                 {model &&
                   model.children
@@ -738,7 +775,6 @@ const ThreejsOLD = () => {
                     ))}
               </select>
             </label>
-
           </div>
 
           <div style={{ margin: '10px' }}>
@@ -750,8 +786,7 @@ const ThreejsOLD = () => {
               step={0.01}
               disabled={!selectedColorMesh}
               value={modelMatenees}
-              onChange={handelMetalnessChange}
-            />
+              onChange={handelMetalnessChange} />
             {" " + parseInt(modelMatenees * 100) + '%'}
           </div>
 
@@ -764,8 +799,7 @@ const ThreejsOLD = () => {
               step={0.01}
               disabled={!selectedColorMesh}
               value={modelRoughness}
-              onChange={handelRoughnessChange}
-            />
+              onChange={handelRoughnessChange} />
             {" " + parseInt(modelRoughness * 100) + '%'}
           </div>
 
@@ -778,8 +812,7 @@ const ThreejsOLD = () => {
               step={0.1}
               disabled={!selectedColorMesh}
               value={modelOpacity}
-              onChange={handleOpacityChange}
-            />
+              onChange={handleOpacityChange} />
             {" " + parseInt(modelOpacity * 100) + '%'}
           </div>
 
@@ -790,8 +823,7 @@ const ThreejsOLD = () => {
                 type="file"
                 accept=".hdr"
                 onChange={handelHDR}
-                style={{ marginBottom: "10px" }}
-              />
+                style={{ marginBottom: "10px" }} />
             </label>
           </div>
 
@@ -805,8 +837,7 @@ const ThreejsOLD = () => {
               step='1'
               disabled={mouseControls || useOrbitControls}
               value={zoom}
-              onChange={handleZoomChange}
-            />
+              onChange={handleZoomChange} />
             {" " + parseInt(zoom)}
           </div>
 
@@ -818,8 +849,7 @@ const ThreejsOLD = () => {
               max="360"
               disabled={mouseControls || useOrbitControls}
               value={azimuth * 180 / Math.PI}
-              onChange={handleAzimuthChange}
-            />
+              onChange={handleAzimuthChange} />
 
           </div>
           <div style={{ margin: '10px' }}>
@@ -830,8 +860,7 @@ const ThreejsOLD = () => {
               max="180"
               disabled={mouseControls || useOrbitControls}
               value={polar * 180 / Math.PI}
-              onChange={handlePolarChange}
-            />
+              onChange={handlePolarChange} />
           </div>
 
           <div style={{ margin: '10px' }}>
@@ -843,8 +872,7 @@ const ThreejsOLD = () => {
               step='0.01'
               disabled={mouseControls || useOrbitControls}
               value={camrotation}
-              onChange={(e) => handelCameraRotation(e)}
-            />
+              onChange={(e) => handelCameraRotation(e)} />
             {" " + camrotation}
           </div>
 
@@ -856,7 +884,6 @@ const ThreejsOLD = () => {
           <br></br>
           <button style={{ margin: "10px" }} disabled={useOrbitControls}
             onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
-          <br></br>
 
           <button
             style={{ margin: "10px" }}
@@ -866,7 +893,80 @@ const ThreejsOLD = () => {
           </button>
 
           <br></br>
-          <button style={{ margin: "10px" }} onClick={() => handelResetPosition()} >Reset Position </button>
+          <button style={{ marginBottom: "10px" }} onClick={() => handelLightOn(!lightOn)} >Light {lightOn ? "On" : "Off"}</button>
+
+          <br></br>
+          <div style={{ marginBottom: "10px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              Light Color:
+              <input
+                type="color"
+                disabled={!lightOn}
+                value={lightColor}
+                onChange={(e) => handelLightColour(e.target.value)}
+                style={{ marginLeft: "10px", verticalAlign: "middle" }} />
+              {" " + lightColor}
+            </label>
+          </div>
+
+          <br></br>
+          <div style={{ marginBottom: "10px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              Light Intensity:
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                disabled={!lightOn}
+                value={lightIntensity}
+                onChange={(e) => handelLightIntensity(e.target.value)}
+                style={{ marginLeft: "10px", verticalAlign: "middle" }} />
+              {" " + lightIntensity}
+            </label>
+          </div>
+
+          <div style={{ marginBottom: "10px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              colour Light X:
+              <input
+                type="range"
+                min="-20"
+                max="20"
+                step="0.5"
+                value={lightPosition.x}
+                disabled={!lightOn}
+                onChange={(e) => handleLightPositionChange("x", e.target.value)}
+                style={{ marginLeft: "10px", verticalAlign: "middle" }} />
+              {" " + lightPosition.x}
+            </label>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              colour Light Y:
+              <input
+                type="range"
+                min="-10"
+                max="20"
+                step="0.5"
+                disabled={!lightOn}
+                value={lightPosition.y}
+                onChange={(e) => handleLightPositionChange("y", e.target.value)}
+                style={{ marginLeft: "10px", verticalAlign: "middle" }} />
+              {" " + lightPosition.y}
+            </label>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              colour Light Z:
+              <input
+                type="range"
+                min="-20"
+                max="20"
+                step="0.5"
+                disabled={!lightOn}
+                value={lightPosition.z}
+                onChange={(e) => handleLightPositionChange("z", e.target.value)}
+                style={{ marginLeft: "10px", verticalAlign: "middle" }} />
+              {" " + lightPosition.z}
+            </label>
+          </div>
 
         </div>
         <div
@@ -876,8 +976,7 @@ const ThreejsOLD = () => {
             height: "100%",
             boxSizing: "border-box",
             border: "1px solid #ccc"
-          }}
-        />
+          }} />
       </div>
     </>
   );
