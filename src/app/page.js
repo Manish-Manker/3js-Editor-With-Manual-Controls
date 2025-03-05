@@ -179,17 +179,21 @@ const ThreejsOLD = () => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-
+            
             child.material.flatShading = false;
             child.material.needsUpdate = true;
             child.geometry.computeVertexNormals();
-
+            console.log("map ->>",child.material.map);
+            
+            child.material.map = null;
             // Improve material quality
             if (child.material) {
               child.material.precision = "highp";
               child.encoding = THREE.sRGBEncoding
-
+              console.log(child.material.map);
               if (child.material.map) {
+                console.log("inside the map");
+                
                 child.material.map.anisotropy =
                   renderer.capabilities.getMaxAnisotropy();
                 child.material.map.minFilter = THREE.LinearFilter;
@@ -447,6 +451,8 @@ const ThreejsOLD = () => {
         texture.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
 
         texture.mapping = THREE.UVMapping;
+        console.log(selectedMesh.material.map);
+        
         selectedMesh.material.map = texture;
         selectedMesh.material.needsUpdate = true;
       };
