@@ -122,26 +122,25 @@ const ThreejsOLD = () => {
     const loadModel = (gltf) => {
 
       if (isGlossy == true) {
-
+        const Pmaterial = new THREE.MeshPhysicalMaterial({
+          // Ensure transparency and glass effect
+          transmission: 0,
+          roughness: 0,
+          metalness: 0,
+          ior: 1.5,
+          clearcoat: 0.4,
+          clearcoatRoughness: 0.1,
+          thickness: 1,
+          opacity: 1,
+          transparent: true,
+          specularColor: '#FEFEFE',
+          emissiveIntensity: 0,
+          aoMapIntensity: 1,
+          side: 0,
+          emissive: "#000000",
+          depthTest: true
+        });
         gltf.scene.traverse((child) => {
-          const Pmaterial = new THREE.MeshPhysicalMaterial({
-            // Ensure transparency and glass effect
-            transmission: 0,
-            roughness: 0,
-            metalness: 0,
-            ior: 1.5,
-            clearcoat: 0.4,
-            clearcoatRoughness: 0.1,
-            thickness: 1,
-            opacity: 1,
-            transparent: true,
-            specularColor: '#FEFEFE',
-            emissiveIntensity: 0,
-            aoMapIntensity: 1,
-            side: 0,
-            emissive: "#000000",
-            depthTest: true
-          });
 
           if (child.material && child.material.color) {
             Pmaterial.color = child.material.color;
@@ -179,21 +178,18 @@ const ThreejsOLD = () => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            
+
             child.material.flatShading = false;
             child.material.needsUpdate = true;
             child.geometry.computeVertexNormals();
-            console.log("map ->>",child.material.map);
-            
+
             child.material.map = null;
             // Improve material quality
             if (child.material) {
               child.material.precision = "highp";
               child.encoding = THREE.sRGBEncoding
-              console.log(child.material.map);
               if (child.material.map) {
-                console.log("inside the map");
-                
+
                 child.material.map.anisotropy =
                   renderer.capabilities.getMaxAnisotropy();
                 child.material.map.minFilter = THREE.LinearFilter;
@@ -451,8 +447,7 @@ const ThreejsOLD = () => {
         texture.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
 
         texture.mapping = THREE.UVMapping;
-        console.log(selectedMesh.material.map);
-        
+
         selectedMesh.material.map = texture;
         selectedMesh.material.needsUpdate = true;
       };
