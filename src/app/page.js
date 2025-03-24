@@ -257,17 +257,18 @@ const ThreejsOLD = () => {
     controls.minDistance = 2;
     controls.maxDistance = 30;
 
-    const gizmo = new ViewportGizmo(camera, renderer, {
-      
+    const can = document.getElementById("canvas");
+    const gizmo = new ViewportGizmo(camera, renderer,{
+      container: can, 
       "type": "sphere",
       "size": 100,
-      "placement": "buttom-left",
+      "placement": "bottom-left",
       "resolution": 64,
       "lineWidth": 5,
       "radius": 1,
       "smoothness": 18,
       "animated": true,
-      "interactive": true, 
+      "interactive": true,
       "enabled": true,  
       "speed": 1.3,
       "background": {
@@ -284,10 +285,10 @@ const ThreejsOLD = () => {
         "weight": 800
       },
       "offset": {
-        "top": 350,
-        "left": 400,
-        "bottom": 0,
-        "right": 0
+        bottom: 0,  
+        left: 0,   
+        top: 0,
+        right: 0
       },
       "corners": {
         "enabled": false,
@@ -457,7 +458,6 @@ const ThreejsOLD = () => {
     });
     gizmo.attachControls(controls);
     gizmoRef.current = gizmo;
-    // gizmo.detachControls(controls);
 
 
     controlsRef.current = controls;
@@ -468,7 +468,10 @@ const ThreejsOLD = () => {
         controls.update();
       }
       renderer.render(scene, camera);
+
+      gizmo.update();
       gizmo.render();
+
     };
     animate();
 
@@ -611,10 +614,10 @@ const ThreejsOLD = () => {
       cameraRef.current.position.set(0, 0, 5.5);
       cameraRef.current.rotation.set(0, 0, 0);
     }
-    if(useOrbitControls){
+    if (useOrbitControls) {
       gizmoRef.current.attachControls(controlsRef.current);
       gizmoRef.current.enabled = true;
-    }else{
+    } else {
       gizmoRef.current.detachControls(controlsRef.current);
       gizmoRef.current.enabled = false;
     }
@@ -762,7 +765,7 @@ const ThreejsOLD = () => {
   };
 
   const updateCameraPosition = (r, p, a, rotation) => {
-    
+
     if (!cameraRef.current || useOrbitControls) return; // Skip if orbit controls active
 
     // Calculate camera position on sphere
@@ -774,7 +777,7 @@ const ThreejsOLD = () => {
     cameraRef.current.lookAt(0, 0, 0);
 
     cameraRef.current.rotateZ(rotation);
-   
+
     // Update camera matrix
     cameraRef.current.updateMatrix();
     cameraRef.current.updateMatrixWorld();
@@ -1198,13 +1201,15 @@ const ThreejsOLD = () => {
 
         </div>
         <div
-        id="canva"
-          ref={mountRef}
+        id="canvas"
+        ref={mountRef}
           style={{
             width: "100%",
             height: "100%",
             boxSizing: "border-box",
-            border: "1px solid #ccc"
+            border: "1px solid #ccc",
+            position: "relative", 
+            overflow: "hidden"    
           }} />
       </div>
     </>
