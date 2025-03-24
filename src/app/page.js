@@ -6,7 +6,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { ViewportGizmo } from "three-viewport-gizmo";
 
 const ThreejsOLD = () => {
   const mountRef = useRef(null);
@@ -50,6 +51,8 @@ const ThreejsOLD = () => {
   const [lightColor, setLightColor] = useState("#ffffff");
   const [lightIntensity, setLightIntensity] = useState(1.0);
   const [lightPosition, setLightPosition] = useState({ x: -4, y: 4, z: 5 });
+
+  const gizmoRef = useRef(null);
 
   useEffect(() => {
     const currentMount = mountRef.current;
@@ -121,7 +124,7 @@ const ThreejsOLD = () => {
     loader.setDRACOLoader(dracoLoader);
     const loadModel = (gltf) => {
 
-      if (isGlossy == true) {
+      if (isGlossy) {
 
         gltf.scene.traverse((child) => {
           const Pmaterial = new THREE.MeshPhysicalMaterial({
@@ -179,12 +182,12 @@ const ThreejsOLD = () => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            
+
             child.material.flatShading = false;
             child.material.needsUpdate = true;
             child.geometry.computeVertexNormals();
-            console.log("map ->>",child.material.map);
-            
+            console.log("map ->>", child.material.map);
+
             child.material.map = null;
             // Improve material quality
             if (child.material) {
@@ -193,7 +196,7 @@ const ThreejsOLD = () => {
               console.log(child.material.map);
               if (child.material.map) {
                 console.log("inside the map");
-                
+
                 child.material.map.anisotropy =
                   renderer.capabilities.getMaxAnisotropy();
                 child.material.map.minFilter = THREE.LinearFilter;
@@ -224,7 +227,7 @@ const ThreejsOLD = () => {
     };
 
     if (!modelFile) {
-      loader.load("/Pill Bottle 3.glb", (gltf) => {
+      loader.load("Supplement Jar long (4) compressed.glb", (gltf) => {
         const modelScene = loadModel(gltf);
         setDefaultModel(modelScene);
         setModel(modelScene);
@@ -253,6 +256,210 @@ const ThreejsOLD = () => {
     controls.dampingFactor = 0.5;
     controls.minDistance = 2;
     controls.maxDistance = 30;
+
+    const gizmo = new ViewportGizmo(camera, renderer, {
+      
+      "type": "sphere",
+      "size": 100,
+      "placement": "buttom-left",
+      "resolution": 64,
+      "lineWidth": 5,
+      "radius": 1,
+      "smoothness": 18,
+      "animated": true,
+      "interactive": true, 
+      "enabled": true,  
+      "speed": 1.3,
+      "background": {
+        "enabled": true,
+        "color": 16777215,
+        "opacity": 0,
+        "hover": {
+          "color": 11579568,
+          "opacity": 0.5
+        }
+      },
+      "font": {
+        "family": "sans-serif",
+        "weight": 800
+      },
+      "offset": {
+        "top": 350,
+        "left": 400,
+        "bottom": 0,
+        "right": 0
+      },
+      "corners": {
+        "enabled": false,
+        "color": 15915362,
+        "opacity": 1,
+        "scale": 0.15,
+        "radius": 1,
+        "smoothness": 18,
+        "hover": {
+          "color": 16777215,
+          "opacity": 1,
+          "scale": 0.2
+        }
+      },
+      "edges": {
+        "enabled": false,
+        "color": 15915362,
+        "opacity": 1,
+        "radius": 1,
+        "smoothness": 18,
+        "scale": 0.15,
+        "hover": {
+          "color": 16777215,
+          "opacity": 0.13,
+          "scale": 0.2
+        }
+      },
+      "x": {
+        "enabled": true,
+        "color": 16725587,
+        "opacity": 1,
+        "scale": 0.7,
+        "labelColor": 2236962,
+        "line": true,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        },
+        "hover": {
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "scale": 0.7,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "X"
+      },
+      "y": {
+        "enabled": true,
+        "color": 9100032,
+        "opacity": 1,
+        "scale": 0.7,
+        "labelColor": 2236962,
+        "line": true,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        },
+        "hover": {
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "scale": 0.7,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "Y"
+      },
+      "z": {
+        "enabled": true,
+        "color": 2920447,
+        "opacity": 1,
+        "scale": 0.7,
+        "labelColor": 2236962,
+        "line": true,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        },
+        "hover": {
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "scale": 0.7,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "Z"
+      },
+      "nx": {
+        "line": false,
+        "scale": 0.45,
+        "hover": {
+          "scale": 0.5,
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "",
+        "enabled": true,
+        "color": 16725587,
+        "opacity": 1,
+        "labelColor": 2236962,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "ny": {
+        "line": false,
+        "scale": 0.45,
+        "hover": {
+          "scale": 0.5,
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "",
+        "enabled": true,
+        "color": 9100032,
+        "opacity": 1,
+        "labelColor": 2236962,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "nz": {
+        "line": false,
+        "scale": 0.45,
+        "hover": {
+          "scale": 0.5,
+          "color": 16777215,
+          "labelColor": 2236962,
+          "opacity": 1,
+          "border": {
+            "size": 0,
+            "color": 14540253
+          }
+        },
+        "label": "",
+        "enabled": true,
+        "color": 2920447,
+        "opacity": 1,
+        "labelColor": 2236962,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "isSphere": true
+    });
+    gizmo.attachControls(controls);
+    gizmoRef.current = gizmo;
+    // gizmo.detachControls(controls);
+
+
     controlsRef.current = controls;
 
     const animate = () => {
@@ -261,6 +468,7 @@ const ThreejsOLD = () => {
         controls.update();
       }
       renderer.render(scene, camera);
+      gizmo.render();
     };
     animate();
 
@@ -270,6 +478,7 @@ const ThreejsOLD = () => {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      gizmo.update();
     };
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -402,6 +611,15 @@ const ThreejsOLD = () => {
       cameraRef.current.position.set(0, 0, 5.5);
       cameraRef.current.rotation.set(0, 0, 0);
     }
+    if(useOrbitControls){
+      gizmoRef.current.attachControls(controlsRef.current);
+      gizmoRef.current.enabled = true;
+    }else{
+      gizmoRef.current.detachControls(controlsRef.current);
+      gizmoRef.current.enabled = false;
+    }
+    gizmoRef.current.update();
+
   }, [useOrbitControls]);
 
   useEffect(() => {
@@ -452,7 +670,7 @@ const ThreejsOLD = () => {
 
         texture.mapping = THREE.UVMapping;
         console.log(selectedMesh.material.map);
-        
+
         selectedMesh.material.map = texture;
         selectedMesh.material.needsUpdate = true;
       };
@@ -544,6 +762,7 @@ const ThreejsOLD = () => {
   };
 
   const updateCameraPosition = (r, p, a, rotation) => {
+    
     if (!cameraRef.current || useOrbitControls) return; // Skip if orbit controls active
 
     // Calculate camera position on sphere
@@ -553,11 +772,14 @@ const ThreejsOLD = () => {
 
     cameraRef.current.position.set(x, y, z);
     cameraRef.current.lookAt(0, 0, 0);
-    cameraRef.current.rotateZ(rotation);
 
+    cameraRef.current.rotateZ(rotation);
+   
     // Update camera matrix
     cameraRef.current.updateMatrix();
     cameraRef.current.updateMatrixWorld();
+    gizmoRef.current.update();
+
   };
 
   const handelResetPosition = () => {
@@ -976,6 +1198,7 @@ const ThreejsOLD = () => {
 
         </div>
         <div
+        id="canva"
           ref={mountRef}
           style={{
             width: "100%",

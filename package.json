@@ -15,7 +15,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.172.0",
-    "three-gpu-pathtracer": "^0.0.23"
+    "three-gpu-pathtracer": "^0.0.23",
+    "three-viewport-gizmo": "^2.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
