@@ -37,7 +37,7 @@ const ThreejsOLD = () => {
   const [modelRoughness, setmodelRoughness] = useState(0);
   const [modelOpacity, setModelOpacity] = useState(1.0);
 
-  const [isGlossy, setIsGlossy] = useState('glossy');
+  const [isGlossy, setIsGlossy] = useState('glass');
   const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
@@ -183,26 +183,26 @@ const ThreejsOLD = () => {
           transmission: 1.0,           // Maximum transmission for clear glass
           thickness: 0.6,             // Moderate thickness for better refraction
           roughness: 0.05,           // Very slight roughness for subtle imperfections
-          metalness: 0,              // Non-metallic material
-          ior: 1.52,                 // Accurate index of refraction for glass
+          metalness: 0.9,              // Non-metallic material
+          ior: 0.9,                 // Accurate index of refraction for glass
 
           // Surface properties
-          reflectivity: 1.0,         // High reflectivity for glass shine
+          reflectivity: 0.2,         // High reflectivity for glass shine
           clearcoat: 1.0,            // Maximum clearcoat for surface shine
           clearcoatRoughness: 0.1,   // Smooth clearcoat surface
 
           // Transparency settings
           transparent: true,
-          opacity: 0.6,              // Lower opacity for more transparency
+          opacity: 0.5,              // Lower opacity for more transparency
 
           // Environment and rendering
-          envMapIntensity: 1.5,      // Stronger environment reflections
+          envMapIntensity: 0.9,      // Stronger environment reflections
           side: THREE.DoubleSide,    // Render both sides
 
           // Additional properties for realism
           attenuationColor: new THREE.Color(0.9, 0.9, 0.9), // Slight blue-green tint
-          attenuationDistance: 0.5,   // How far light travels through glass
-          sheen: 0.0,                // No fabric-like sheen
+          attenuationDistance: 1.0,   // How far light travels through glass
+          sheen: 1.0,                // No fabric-like sheen
           specularIntensity: 1.0,    // High specular highlights
           specularColor: new THREE.Color(1, 1, 1) // White specular color
         });
