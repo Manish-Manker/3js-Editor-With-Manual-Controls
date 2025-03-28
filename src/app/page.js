@@ -37,7 +37,7 @@ const ThreejsOLD = () => {
   const [modelRoughness, setmodelRoughness] = useState(0);
   const [modelOpacity, setModelOpacity] = useState(1.0);
 
-  const [isGlossy, setIsGlossy] = useState(true);
+  const [isGlossy, setIsGlossy] = useState('glossy');
   const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
@@ -124,7 +124,7 @@ const ThreejsOLD = () => {
     loader.setDRACOLoader(dracoLoader);
     const loadModel = (gltf) => {
 
-      if (isGlossy) {
+      if (isGlossy === 'glossy') {
 
         gltf.scene.traverse((child) => {
           const Pmaterial = new THREE.MeshPhysicalMaterial({
@@ -176,7 +176,56 @@ const ThreejsOLD = () => {
           }
 
         });
-      } else {
+      }
+      else if (isGlossy === 'glass') {
+        const material = new THREE.MeshPhysicalMaterial({
+          // Core glass properties
+          transmission: 1.0,           // Maximum transmission for clear glass
+          thickness: 0.6,             // Moderate thickness for better refraction
+          roughness: 0.05,           // Very slight roughness for subtle imperfections
+          metalness: 0,              // Non-metallic material
+          ior: 1.52,                 // Accurate index of refraction for glass
+
+          // Surface properties
+          reflectivity: 1.0,         // High reflectivity for glass shine
+          clearcoat: 1.0,            // Maximum clearcoat for surface shine
+          clearcoatRoughness: 0.1,   // Smooth clearcoat surface
+
+          // Transparency settings
+          transparent: true,
+          opacity: 0.6,              // Lower opacity for more transparency
+
+          // Environment and rendering
+          envMapIntensity: 1.5,      // Stronger environment reflections
+          side: THREE.DoubleSide,    // Render both sides
+
+          // Additional properties for realism
+          attenuationColor: new THREE.Color(0.9, 0.9, 0.9), // Slight blue-green tint
+          attenuationDistance: 0.5,   // How far light travels through glass
+          sheen: 0.0,                // No fabric-like sheen
+          specularIntensity: 1.0,    // High specular highlights
+          specularColor: new THREE.Color(1, 1, 1) // White specular color
+        });
+
+        gltf.scene.traverse((child) => {
+
+          if (child.isMesh && child.name === "Bottle") {
+
+
+            // Apply glass material
+            child.material = material.clone(); // Clone to avoid sharing materials
+
+            // Additional mesh settings
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material.needsUpdate = true;
+            child.frustumCulled = false;
+            // Ensure proper normals for reflections
+            child.geometry.computeVertexNormals();
+          }
+        });
+      }
+      else if (isGlossy === 'matt') {
         gltf.scene.traverse((child) => {
           child.frustumCulled = false;
           if (child.isMesh) {
@@ -258,8 +307,8 @@ const ThreejsOLD = () => {
     controls.maxDistance = 30;
 
     const can = document.getElementById("canvas");
-    const gizmo = new ViewportGizmo(camera, renderer,{
-      container: can, 
+    const gizmo = new ViewportGizmo(camera, renderer, {
+      container: can,
       "type": "sphere",
       "size": 100,
       "placement": "bottom-left",
@@ -269,7 +318,7 @@ const ThreejsOLD = () => {
       "smoothness": 18,
       "animated": true,
       "interactive": true,
-      "enabled": true,  
+      "enabled": true,
       "speed": 1.3,
       "background": {
         "enabled": true,
@@ -285,8 +334,8 @@ const ThreejsOLD = () => {
         "weight": 800
       },
       "offset": {
-        bottom: 0,  
-        left: 0,   
+        bottom: 0,
+        left: 0,
         top: 0,
         right: 0
       },
@@ -659,23 +708,25 @@ const ThreejsOLD = () => {
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (e) => {
-        const texture = new THREE.TextureLoader().load(e.target.result);
-        texture.flipY = false;
-
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.encoding = THREE.sRGBEncoding;  // Ensure correct color encoding
-        texture.minFilter = THREE.NearestMipmapLinearFilter;
-        texture.generateMipmaps = true;  // Enable mipmap generation
-        texture.magFilter = THREE.LinearFilter;  // Use linear filter for magnification
-        texture.wrapS = THREE.ClampToEdgeWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        texture.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
-
-        texture.mapping = THREE.UVMapping;
-        console.log(selectedMesh.material.map);
-
-        selectedMesh.material.map = texture;
-        selectedMesh.material.needsUpdate = true;
+        // Dispose previous texture to free GPU memory
+        if (selectedMesh.material.map) {
+          selectedMesh.material.map.dispose();
+        }
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load(e.target.result, () => {
+          texture.flipY = false;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.encoding = THREE.sRGBEncoding;
+          texture.minFilter = THREE.NearestMipmapLinearFilter;
+          texture.generateMipmaps = true;
+          texture.magFilter = THREE.LinearFilter;
+          texture.wrapS = THREE.ClampToEdgeWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          texture.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
+          texture.mapping = THREE.UVMapping;
+          selectedMesh.material.map = texture;
+          selectedMesh.material.needsUpdate = true;
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -933,7 +984,22 @@ const ThreejsOLD = () => {
             />
           </label>
 
-          <button style={{ marginBottom: "10px" }} onClick={() => setIsGlossy(!isGlossy)} >Matterial Change to {isGlossy ? "Matt" : "Glossy"}</button>
+          <div style={{ marginBottom: "10px" }}>
+            <label>
+              Material Type:
+              <select
+                value={isGlossy}
+                onChange={(e) => setIsGlossy(e.target.value)}
+                style={{ marginLeft: "10px" }}
+              >
+                <option value="matt">Matt</option>
+                <option value="glossy">Glossy</option>
+                <option value="glass">Glass</option>
+                {/* <option value="metal">Metal</option> */}
+                {/* <option value="plastic">Plastic</option> */}
+              </select>
+            </label>
+          </div>
 
           <div style={{ marginBottom: "10px" }}>
             <label>
@@ -1201,19 +1267,20 @@ const ThreejsOLD = () => {
 
         </div>
         <div
-        id="canvas"
-        ref={mountRef}
+          id="canvas"
+          ref={mountRef}
           style={{
             width: "100%",
             height: "100%",
             boxSizing: "border-box",
             border: "1px solid #ccc",
-            position: "relative", 
-            overflow: "hidden"    
+            position: "relative",
+            overflow: "hidden"
           }} />
       </div>
     </>
   );
+ 
 };
 
 export default ThreejsOLD;
