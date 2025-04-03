@@ -33,9 +33,12 @@ const ThreejsOLD = () => {
   const [rendersize, setrendersize] = useState();
 
   const modelRef = useRef(null);
+  const animatmodelRef = useRef(null);
   const [modelMatenees, setmodelMatenees] = useState(0);
   const [modelRoughness, setmodelRoughness] = useState(0);
   const [modelOpacity, setModelOpacity] = useState(1.0);
+  const [modelTransmission, setModelTransmission] = useState(1);
+
 
   const [isGlossy, setIsGlossy] = useState('glass');
   const [camrotation, setcamrotation] = useState(0);
@@ -53,12 +56,14 @@ const ThreejsOLD = () => {
   const [lightPosition, setLightPosition] = useState({ x: -4, y: 4, z: 5 });
 
   const gizmoRef = useRef(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
 
   useEffect(() => {
     const currentMount = mountRef.current;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#c0c0c0");
+    scene.background = new THREE.Color("#ebebeb");
     sceneRef.current = scene;
 
     let camera = new THREE.PerspectiveCamera(20, currentMount.clientWidth / currentMount.clientHeight, 0.1, 10000);
@@ -182,8 +187,8 @@ const ThreejsOLD = () => {
           // Core glass properties
           transmission: 1.0,           // Maximum transmission for clear glass
           thickness: 0.6,             // Moderate thickness for better refraction
-          roughness: 0.05,           // Very slight roughness for subtle imperfections
-          metalness: 0.9,              // Non-metallic material
+          roughness: 0.03,           // Very slight roughness for subtle imperfections
+          metalness: 0.5,              // Non-metallic material
           ior: 0.9,                 // Accurate index of refraction for glass
 
           // Surface properties
@@ -207,20 +212,27 @@ const ThreejsOLD = () => {
           specularColor: new THREE.Color(1, 1, 1) // White specular color
         });
 
+        const materials = new THREE.MeshPhysicalMaterial();
+
         gltf.scene.traverse((child) => {
 
-          if (child.isMesh && child.name === "Bottle") {
+          if (child.isMesh) {
 
-
-            // Apply glass material
-            child.material = material.clone(); // Clone to avoid sharing materials
+            if ((child.name === "Bottle" || child.name === "Tub")) {
+              // Apply glass material
+              child.material = material.clone();
+              child.material.frustumCulled = false;
+            }
+            // else{
+            //   child.material = materials.clone();
+            //   child.material.frustumCulled = false;
+            // }
 
             // Additional mesh settings
+            child.frustumCulled = false;
             child.castShadow = true;
             child.receiveShadow = true;
             child.material.needsUpdate = true;
-            child.frustumCulled = false;
-            // Ensure proper normals for reflections
             child.geometry.computeVertexNormals();
           }
         });
@@ -235,7 +247,6 @@ const ThreejsOLD = () => {
             child.material.flatShading = false;
             child.material.needsUpdate = true;
             child.geometry.computeVertexNormals();
-            console.log("map ->>", child.material.map);
 
             child.material.map = null;
             // Improve material quality
@@ -256,13 +267,59 @@ const ThreejsOLD = () => {
           }
         });
       }
+      else if (isGlossy === 'plastic') {
+        const material = new THREE.MeshPhysicalMaterial({
+          transmission: 0.95,          // High transparency for a clear plastic look
+          thickness: 0.8,              // Slightly thicker for better refraction
+          roughness: 0.1,              // Slight roughness for subtle imperfections
+          metalness: 0.0,              // Non-metallic material
+          ior: 1.45,                   // Index of refraction for plastic
+
+          reflectivity: 0.2,           // Moderate reflectivity for plastic shine
+          clearcoat: 1.0,              // Clearcoat for surface shine
+          clearcoatRoughness: 0.05,    // Slightly rough clearcoat for realism
+
+          transparent: true,
+          opacity: 0.9,                // High opacity for a semi-transparent look
+
+          envMapIntensity: 1.5,        // Moderate environment reflections
+          side: THREE.DoubleSide,      // Render both sides
+
+          attenuationColor: new THREE.Color(0.95, 0.95, 0.95), // Slightly tinted attenuation
+          attenuationDistance: 1.5,    // Light travels through the material
+          sheen: 0.0,                  // No fabric-like sheen
+          specularIntensity: 0.8,      // Stronger specular highlights
+          specularColor: new THREE.Color(1, 1, 1), // White specular color
+        });
+
+        gltf.scene.traverse((child) => {
+
+          if (child.isMesh) {
+
+            if ((child.name === "Bottle" || child.name === "Tub")) {
+              // Apply glass material
+              child.material = material.clone();
+              child.material.frustumCulled = false;
+            }
+
+            // Additional mesh settings
+            child.frustumCulled = false;
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material.needsUpdate = true;
+            child.geometry.computeVertexNormals();
+          }
+        });
+      }
 
       const pivot = new THREE.Group();
       pivot.add(gltf.scene);
+      console.log("gltf", gltf);
 
       scene.add(pivot);
 
       modelRef.current = gltf.scene;
+      animatmodelRef.current = gltf;
       pivotRef.current = pivot;
 
       // Calculate model bounds
@@ -270,13 +327,13 @@ const ThreejsOLD = () => {
       const center = box.getCenter(new THREE.Vector3());
       gltf.scene.position.sub(center);
 
-      setModelBounds(box);
+      // setModelBounds(box);
 
       return gltf.scene;
     };
 
     if (!modelFile) {
-      loader.load("Supplement Jar long (4) compressed.glb", (gltf) => {
+      loader.load("Supplement Jar Single.glb", (gltf) => {
         const modelScene = loadModel(gltf);
         setDefaultModel(modelScene);
         setModel(modelScene);
@@ -547,6 +604,7 @@ const ThreejsOLD = () => {
       scene.remove(modelRef.current);
       modelRef.current = null;
       renderer.dispose();
+
     };
   }, [modelFile, isGlossy]);
 
@@ -687,7 +745,49 @@ const ThreejsOLD = () => {
     }
   }, [useOrbitControls]);
 
+  const removeCurrentModel = () => {
+    console.log("in remove function");
+
+    if (modelRef.current) {
+      modelRef.current.traverse((child) => {
+        if (child.isMesh) {
+          // Dispose of material(s)
+          if (Array.isArray(child.material)) {
+            child.material.forEach((material) => {
+              if (material.map) material.map.dispose(); // Dispose of texture map
+              if (material.normalMap) material.normalMap.dispose(); // Dispose of normal map
+              if (material.roughnessMap) material.roughnessMap.dispose(); // Dispose of roughness map
+              if (material.metalnessMap) material.metalnessMap.dispose(); // Dispose of metalness map
+              material.dispose(); // Dispose of material
+            });
+          } else if (child.material) {
+            if (child.material.map) child.material.map.dispose();
+            if (child.material.normalMap) child.material.normalMap.dispose();
+            if (child.material.roughnessMap) child.material.roughnessMap.dispose();
+            if (child.material.metalnessMap) child.material.metalnessMap.dispose();
+            child.material.dispose();
+          }
+
+          // Dispose of geometry
+          if (child.geometry) {
+            child.geometry.dispose();
+          }
+        }
+      });
+
+      // Remove the model from the scene
+      sceneRef.current.remove(modelRef.current);
+      modelRef.current = null;
+    }
+
+    if (pivotRef.current) {
+      sceneRef.current.remove(pivotRef.current);
+      pivotRef.current = null;
+    }
+  };
+
   const handleFileChange = (event) => {
+    removeCurrentModel();
     setModelFile(event.target.files[0]);
     setSelectedMesh(null);
     handelResetPosition();
@@ -711,6 +811,8 @@ const ThreejsOLD = () => {
         // Dispose previous texture to free GPU memory
         if (selectedMesh.material.map) {
           selectedMesh.material.map.dispose();
+          selectedMesh.material.map = null;
+          selectedMesh.material.dispose();
         }
         const textureLoader = new THREE.TextureLoader();
         const texture = textureLoader.load(e.target.result, () => {
@@ -845,24 +947,7 @@ const ThreejsOLD = () => {
     updateCameraPosition(5.5, Math.PI / 2, 1.57, 0);
   };
 
-  const handelHDR = (event) => {
-    const file = event?.target?.files[0];
 
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const pmremGenerator = new THREE.PMREMGenerator(rendererRef.current);
-      pmremGenerator.compileEquirectangularShader();
-
-      const loader = new RGBELoader();
-      loader.load(url, (texture) => {
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        sceneRef.current.environment = null;
-        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-        sceneRef.current.environment = envMap;
-        pmremGenerator.dispose();
-      });
-    }
-  };
 
   const handelMetalnessChange = (event) => {
 
@@ -921,13 +1006,48 @@ const ThreejsOLD = () => {
             child.material.forEach((mat) => {
               if (mat.isMeshPhysicalMaterial || mat.isMeshStandardMaterial) {
                 mat.opacity = value;
-                mat.transparent = value < 1;  // Enable transparency when opacity < 1
+                mat.transparent = value < 1;
+                mat.needsUpdate = true;
               }
             });
           } else {
             if (child.material.isMeshPhysicalMaterial || child.material.isMeshStandardMaterial) {
               child.material.opacity = value;
-              child.material.transparent = value < 1;  // Enable transparency when opacity < 1
+              child.material.transparent = value < 1;
+              child.material.needsUpdate = true;
+            }
+          }
+        }
+      });
+    }
+  };
+
+  const handleTransmissionChange = (event) => {
+    let model = modelRef.current;
+    let value = parseFloat(event.target.value);
+    let mesh = selectedColorMesh;
+    setModelTransmission(value);
+
+    if (model && mesh) {
+      mesh.traverse((child) => {
+        if (child.isMesh) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => {
+              if (mat.isMeshPhysicalMaterial) {
+                mat.transmission = value;
+                mat.transparent = true;
+                mat.needsUpdate = true;
+                mat.side = THREE.DoubleSide;
+                child.renderOrder = 1;
+              }
+            });
+          } else {
+            if (child.material.isMeshPhysicalMaterial) {
+              child.material.transmission = value;
+              child.material.transparent = true;
+              child.material.needsUpdate = true;
+              child.material.side = THREE.DoubleSide;
+              child.renderOrder = 1;
             }
           }
         }
@@ -970,10 +1090,226 @@ const ThreejsOLD = () => {
     setLightIntensity(val);
   }
 
+
+  const mixerRef = useRef(null);
+
+  const playGLTFAnimation = () => {
+
+    if (!modelRef.current) return;
+
+    setIsAnimating(true);
+    const mixer = new THREE.AnimationMixer(animatmodelRef.current.scene);
+    mixerRef.current = mixer;
+
+    const animations = animatmodelRef.current.animations || [];
+
+    if (animations.length === 0) {
+      console.warn("No animations found in the GLTF file.");
+      return;
+    }
+
+    const action = mixer.clipAction(animations[0]);
+    // action.setLoop(THREE.LoopOnce); 
+    action.clampWhenFinished = true;
+    action.play();
+
+    const clock = new THREE.Clock();
+    const animate = () => {
+      const delta = clock.getDelta();
+      mixer.update(delta);
+
+      if (action.isRunning()) {
+        requestAnimationFrame(animate);
+      }
+    };
+    animate();
+  };
+
+  const stopGLTFAnimation = () => {
+    if (mixerRef.current) {
+      mixerRef.current.stopAllAction();
+      mixerRef.current = null;
+      setIsAnimating(false);
+    }
+  };
+
+  const rotateModel = (rotatey, zoom, moveLR, rotatex) => {
+    if (!modelRef.current) return;
+    setIsAnimating(true);
+    const camerapos = cameraRef.current.position.clone();
+    cameraRef.current.position.set(0, 0, 5.5)
+    const duration = 1500; // Duration of the rotation in milliseconds
+    const startTime = performance.now();
+    const initialRotationY = modelRef.current.rotation.y;
+
+    const initposX = pivotRef.current.rotation.x;
+
+    const initialRotationX = modelRef.current.position.x - 1;
+    const initialCameraZ = cameraRef.current.position.z + 5;
+    const targetCameraZ = initialCameraZ - 5;
+
+    // Easing function (easeInOutQuad)
+    const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+    const animate = (time) => {
+      const elapsedTime = time - startTime;
+      const rawProgress = Math.min(elapsedTime / duration, 1);
+      const progress = easeInOutQuad(rawProgress);
+
+      // Rotate the model 360 degrees
+      if (rotatey) modelRef.current.rotation.y = initialRotationY + progress * Math.PI * 2;
+
+      // Interpolate the camera's Z position
+      if (zoom) cameraRef.current.position.z = THREE.MathUtils.lerp(initialCameraZ, targetCameraZ, progress);
+
+      // Interpolate the model's X position
+      if (moveLR) modelRef.current.position.x = THREE.MathUtils.lerp(initialRotationX, 0.4, progress);
+
+      // Rotate the model 360 degrees
+      if (rotatex) pivotRef.current.rotation.x = initposX + progress * Math.PI * 2;
+
+      if (rawProgress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setTimeout(() => {
+          cameraRef.current.position.z = initialCameraZ - 5;
+          modelRef.current.position.x = initialRotationX + 1;
+          cameraRef.current.position.copy(camerapos);
+          setIsAnimating(false);
+        }, 300);
+      }
+    };
+    requestAnimationFrame(animate);
+  };
+
+  const keyframes0 = [
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 12.5 },
+    { positionX: -0.8, positionY: -0.4, positionZ: 0, rotationY: Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 8 },
+    { positionX: 0.2, positionY: -0.4, positionZ: 0, rotationY: Math.PI, rotationX: 0, rotationZ: 0, cameraZ: 4 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 8.5 },
+  ];
+
+  const keyframes1 = [
+    { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.2, positionZ: 0, rotationY: Math.PI/4, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+  ];
+
+  const keyframes2 = [
+    { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: -0.6, rotationZ: 0, cameraZ: 3.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+  ];
+
+
+  // Trigger the animation
+
+  const rotateModel0 = (keyframes , d) => {
+    if (!modelRef.current || !cameraRef.current) return;
+
+    const duration = d; // Total duration of the animation in milliseconds
+    const startTime = performance.now();
+
+    // Easing function (easeInOutQuad)
+    const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+    const animate = (time) => {
+      const elapsedTime = time - startTime;
+      const rawProgress = Math.min(elapsedTime / duration, 1); // Calculate raw progress (0 to 1)
+      const progress = easeInOutQuad(rawProgress); // Apply easing to the progress
+
+      // Determine the current segment of the animation
+      const segmentCount = keyframes.length - 1;
+      const segmentDuration = 1 / segmentCount; // Duration of each segment as a fraction of total progress
+      const currentSegment = Math.floor(progress / segmentDuration);
+      const segmentProgress = (progress % segmentDuration) / segmentDuration; // Progress within the current segment
+
+      if (currentSegment < segmentCount) {
+        const startKeyframe = keyframes[currentSegment];
+        const endKeyframe = keyframes[currentSegment + 1];
+
+        // Interpolate model's rotation
+        if (startKeyframe.rotationY !== undefined && endKeyframe.rotationY !== undefined) {
+          modelRef.current.rotation.y = THREE.MathUtils.lerp(
+            startKeyframe.rotationY,
+            endKeyframe.rotationY,
+            segmentProgress
+          );
+        }
+        if (startKeyframe.rotationX !== undefined && endKeyframe.rotationX !== undefined) {
+          modelRef.current.rotation.x = THREE.MathUtils.lerp(
+            startKeyframe.rotationX,
+            endKeyframe.rotationX,
+            segmentProgress
+          );
+        }
+        if (startKeyframe.rotationZ !== undefined && endKeyframe.rotationZ !== undefined) {
+          modelRef.current.rotation.z = THREE.MathUtils.lerp(
+            startKeyframe.rotationZ,
+            endKeyframe.rotationZ,
+            segmentProgress
+          );
+        }
+
+        // Interpolate model's position
+        if (startKeyframe.positionX !== undefined && endKeyframe.positionX !== undefined) {
+          modelRef.current.position.x = THREE.MathUtils.lerp(
+            startKeyframe.positionX,
+            endKeyframe.positionX,
+            segmentProgress
+          );
+        }
+        if (startKeyframe.positionY !== undefined && endKeyframe.positionY !== undefined) {
+          modelRef.current.position.y = THREE.MathUtils.lerp(
+            startKeyframe.positionY,
+            endKeyframe.positionY,
+            segmentProgress
+          );
+        }
+        if (startKeyframe.positionZ !== undefined && endKeyframe.positionZ !== undefined) {
+          modelRef.current.position.z = THREE.MathUtils.lerp(
+            startKeyframe.positionZ,
+            endKeyframe.positionZ,
+            segmentProgress
+          );
+        }
+
+        // Interpolate camera's Z position
+        if (startKeyframe.cameraZ !== undefined && endKeyframe.cameraZ !== undefined) {
+          cameraRef.current.position.z = THREE.MathUtils.lerp(
+            startKeyframe.cameraZ,
+            endKeyframe.cameraZ,
+            segmentProgress
+          );
+        }
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Animation complete
+        setIsAnimating(false);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  };
+
+
   return (
     <>
-      <div style={{ display: "flex", alignContent: "space-between", height: "100vh", width: "140vh", padding: "10px" }}>
-        <div style={{ padding: "10px", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ display: "flex", height: "100vh", width: "140vh", padding: "10px", overflow: "hidden" }}>
+
+        <div style={{
+          width: "30%",
+          height: "100%",
+          overflowY: "auto",
+          padding: "10px",
+          boxSizing: "border-box",
+          fontFamily: "Arial, sans-serif",
+        }}>
           <label>
             Select Model :
             <input
@@ -996,7 +1332,7 @@ const ThreejsOLD = () => {
                 <option value="glossy">Glossy</option>
                 <option value="glass">Glass</option>
                 {/* <option value="metal">Metal</option> */}
-                {/* <option value="plastic">Plastic</option> */}
+                <option value="plastic">Plastic</option>
               </select>
             </label>
           </div>
@@ -1106,23 +1442,27 @@ const ThreejsOLD = () => {
               type="range"
               min="0"
               max="1.0"
-              step={0.1}
+              step={0.01}
               disabled={!selectedColorMesh}
               value={modelOpacity}
               onChange={handleOpacityChange} />
             {" " + parseInt(modelOpacity * 100) + '%'}
           </div>
 
-          <div style={{ marginBottom: "10px" }} >
-            <label>
-              Select hdr Image:
-              <input
-                type="file"
-                accept=".hdr"
-                onChange={handelHDR}
-                style={{ marginBottom: "10px" }} />
-            </label>
+          <div style={{ margin: '10px' }}>
+            <label> Transparency </label>
+            <input
+              type="range"
+              min="0.0"
+              max="1.0"
+              step={0.01}
+              disabled={!selectedColorMesh}
+              value={modelTransmission}
+              onChange={handleTransmissionChange}
+            />
+            {" " + parseInt(modelTransmission * 100) + '%'}
           </div>
+
 
 
           <div style={{ margin: '10px' }}>
@@ -1265,22 +1605,97 @@ const ThreejsOLD = () => {
             </label>
           </div>
 
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "10px" }}>
+            {/* <button
+              onClick={playGLTFAnimation}
+              disabled={isAnimating} // Optional: Disable the button while animating
+              style={{ padding: "10px" }}
+            >
+              Play GLTF Animation
+            </button>
+
+            <button
+              onClick={stopGLTFAnimation}
+              style={{ padding: "10px" }}
+            >
+              Stop Animation
+            </button> */}
+
+            <button
+              onClick={() => rotateModel(true, false, false, false)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}
+            >
+              Rotate Model 360°
+            </button>
+
+            <button
+              onClick={() => rotateModel(true, true)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}
+            >
+              Rotate Model and Zoom
+            </button>
+
+            <button
+              onClick={() => rotateModel(true, true, true)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}
+            >
+              Rotate Model, Zoom & moveLR
+            </button>
+
+            <button
+              onClick={() => rotateModel(false, true, false, true)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}>
+              Rotate Model Vertical , Zoom
+            </button>
+
+            <button
+              onClick={() => rotateModel0(keyframes0,2000)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}>
+              Rotate Model0
+            </button>
+
+            <button
+              onClick={() => rotateModel0(keyframes1,1000)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}>
+              Rotate Model1
+            </button>
+
+            <button
+              onClick={() => rotateModel0(keyframes2,3000)}
+              style={{ padding: "10px" }}
+              disabled={isAnimating}>
+              Rotate Model1
+            </button>
+          
+          </div>
+
         </div>
+
+        {/* Left Canvas */}
         <div
           id="canvas"
           ref={mountRef}
           style={{
-            width: "100%",
+            width: "70%", // Adjust the width as needed
             height: "100%",
             boxSizing: "border-box",
             border: "1px solid #ccc",
-            position: "relative",
-            overflow: "hidden"
-          }} />
+            position: "sticky", // Keeps it in place while scrolling
+            top: 0, // Ensures it stays at the top
+            overflow: "hidden",
+          }}
+        />
+
       </div>
     </>
   );
- 
+
 };
 
 export default ThreejsOLD;
