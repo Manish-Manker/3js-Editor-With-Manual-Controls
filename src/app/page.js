@@ -9,6 +9,15 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { ViewportGizmo } from "three-viewport-gizmo";
 
+// import { PathTracingRenderer, PhysicalPathTracingMaterial, WebGLPathTracer } from 'three-gpu-pathtracer';
+import { PathTracer, PhysicalPathTracingMaterial } from 'three-gpu-pathtracer';
+// import { GPUPathTracer, PhysicalPathTracingMaterial } from 'three-gpu-pathtracer';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { PMREMGenerator } from 'three';
+
 const ThreejsOLD = () => {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -40,7 +49,7 @@ const ThreejsOLD = () => {
   const [modelTransmission, setModelTransmission] = useState(1);
 
 
-  const [isGlossy, setIsGlossy] = useState('glass');
+  const [isGlossy, setIsGlossy] = useState('plastic');
   const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
@@ -71,6 +80,7 @@ const ThreejsOLD = () => {
     camera.rotation.set(0, 0, 0);
 
     cameraRef.current = camera;
+    scene.add(camera);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -209,7 +219,14 @@ const ThreejsOLD = () => {
           attenuationDistance: 1.0,   // How far light travels through glass
           sheen: 1.0,                // No fabric-like sheen
           specularIntensity: 1.0,    // High specular highlights
-          specularColor: new THREE.Color(1, 1, 1) // White specular color
+          specularColor: new THREE.Color(1, 1, 1), // White specular color
+
+          aoMapIntensity: 3,        // Increases ambient occlusion
+          envMapIntensity: 1.2,       // Enhances environment lighting
+          clearcoat: 1.0,             // Adds clear coat layer
+          clearcoatRoughness: 0.1,    // Makes clear coat slightly rough
+          normalScale: new THREE.Vector2(1.5, 1.5), // Enhances normal map effect
+          shadowSide: THREE.FrontSide //
         });
 
         const materials = new THREE.MeshPhysicalMaterial();
@@ -269,47 +286,45 @@ const ThreejsOLD = () => {
       }
       else if (isGlossy === 'plastic') {
         const material = new THREE.MeshPhysicalMaterial({
-          transmission: 0.95,          // High transparency for a clear plastic look
-          thickness: 0.8,              // Slightly thicker for better refraction
-          roughness: 0.1,              // Slight roughness for subtle imperfections
+          transmission: 0.95,          // High transparency for glass
+          thickness: 1.0,              // Thickness for refraction
+          roughness: 0.1,              // Slight roughness for imperfections
           metalness: 0.0,              // Non-metallic material
-          ior: 1.45,                   // Index of refraction for plastic
-
-          reflectivity: 0.2,           // Moderate reflectivity for plastic shine
+          ior: 1.5,                    // Index of refraction for glass
+          reflectivity: 0.5,           // Moderate reflectivity
           clearcoat: 1.0,              // Clearcoat for surface shine
-          clearcoatRoughness: 0.05,    // Slightly rough clearcoat for realism
-
+          clearcoatRoughness: 0.05,    // Smooth clearcoat
           transparent: true,
-          opacity: 0.9,                // High opacity for a semi-transparent look
-
-          envMapIntensity: 1.5,        // Moderate environment reflections
+          opacity: 0.95,               // Semi-transparent
+          envMapIntensity: 1.5,        // Enhance environment reflections
           side: THREE.DoubleSide,      // Render both sides
-
-          attenuationColor: new THREE.Color(0.95, 0.95, 0.95), // Slightly tinted attenuation
-          attenuationDistance: 1.5,    // Light travels through the material
-          sheen: 0.0,                  // No fabric-like sheen
-          specularIntensity: 0.8,      // Stronger specular highlights
-          specularColor: new THREE.Color(1, 1, 1), // White specular color
+          attenuationColor: new THREE.Color(0.9, 0.5, 0.3), // Slight tint for the glass
+          attenuationDistance: 2.0,    // Light travels through the material
+          specularIntensity: 1.0,      // Strong specular highlights
+          specularColor: new THREE.Color(1, 1, 1),
         });
 
-        gltf.scene.traverse((child) => {
+        // gltf.scene.traverse((child) => {
 
-          if (child.isMesh) {
+        //   if (child.isMesh) {
 
-            if ((child.name === "Bottle" || child.name === "Tub")) {
-              // Apply glass material
-              child.material = material.clone();
-              child.material.frustumCulled = false;
-            }
+        //     if ((child.name === "Bottle" || child.name === "Tub")) {
+        //       // Apply glass material
+        //       child.material = material.clone();
+        //       child.material.frustumCulled = false;
 
-            // Additional mesh settings
-            child.frustumCulled = false;
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.material.needsUpdate = true;
-            child.geometry.computeVertexNormals();
-          }
-        });
+        //       child.castShadow = true; // Enable casting shadows
+        //       child.receiveShadow = true; // Enable receiving shadows
+        //     }
+
+        //     // Additional mesh settings
+        //     child.frustumCulled = false;
+        //     child.castShadow = true;
+        //     child.receiveShadow = true;
+        //     child.material.needsUpdate = true;
+        //     child.geometry.computeVertexNormals();
+        //   }
+        // });
       }
 
       const pivot = new THREE.Group();
@@ -1192,21 +1207,21 @@ const ThreejsOLD = () => {
   const keyframes1 = [
     { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
     { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.2, positionZ: 0, rotationY: Math.PI/4, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.2, positionZ: 0, rotationY: Math.PI / 4, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
     { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
   ];
 
   const keyframes2 = [
     { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: -0.6, rotationZ: 0, cameraZ: 3.5 },
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: -0.6, rotationZ: 0, cameraZ: 3.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
   ];
 
 
   // Trigger the animation
 
-  const rotateModel0 = (keyframes , d) => {
+  const rotateModel0 = (keyframes, d) => {
     if (!modelRef.current || !cameraRef.current) return;
 
     const duration = d; // Total duration of the animation in milliseconds
@@ -1295,6 +1310,285 @@ const ThreejsOLD = () => {
     };
 
     requestAnimationFrame(animate);
+  };
+
+  // Correct import for latest version (tested with three-gpu-pathtracer@1.0.5)
+
+  // const handleHighQualityRender = async () => {
+
+  //   const scene = sceneRef.current;
+  //   const camera = cameraRef.current;
+  //   const renderer = rendererRef.current;
+
+  //   if (!renderer.capabilities.isWebGL2) {
+  //     alert('WebGL 2.0 required for path tracing');
+  //     return;
+  //   }
+  //   try {
+  //     // 1. Initialize path tracer
+  //     const pathTracer = new GPUPathTracer({
+  //       renderer,
+  //       camera,
+  //       scene,
+  //       resolutionScale: 1.0, // 1.0 = full resolution
+  //       samplesPerFrame: 4,   // Samples per animation frame
+  //       tiles: [2, 2]         // Subdivision for progressive rendering [x,y]
+  //     });
+
+  //     // 2. Configure quality settings
+  //     pathTracer.material = new PhysicalPathTracingMaterial();
+  //     pathTracer.material.samples = 256; // Total target samples
+  //     pathTracer.material.bounces = 8;   // Ray bounces
+
+  //     // 3. Set environment lighting
+  //     if (scene.environment) {
+  //       pathTracer.material.envMap = scene.environment;
+  //       pathTracer.material.envMapIntensity = 1.0;
+  //     }
+
+  //     // 4. Progressive rendering
+  //     const canvas = document.createElement('canvas');
+  //     canvas.width = 2048;
+  //     canvas.height = 2048;
+  //     const ctx = canvas.getContext('2d');
+
+  //     // Render loop
+  //     const totalSamples = 256;
+  //     let currentSamples = 0;
+
+  //     while (currentSamples < totalSamples) {
+  //       await pathTracer.update();
+  //       currentSamples += pathTracer.samplesPerFrame;
+
+  //       // Optional: Update progress display
+  //       console.log(`Rendered ${currentSamples}/${totalSamples} samples`);
+
+  //       // Copy current state to canvas
+  //       ctx.drawImage(pathTracer.getCanvas(), 0, 0);
+  //     }
+
+  //     // 5. Final download
+  //     canvas.toBlob(blob => {
+  //       const link = document.createElement('a');
+  //       link.href = URL.createObjectURL(blob);
+  //       link.download = 'path_traced_render.png';
+  //       link.click();
+  //     }, 'image/png', 1.0);
+
+  //     // Cleanup
+  //     pathTracer.dispose();
+
+  //   } catch (error) {
+  //     console.error('Path tracing error:', error);
+  //     // Fallback to standard rendering if path tracing fails
+  //     handleStandardRender();
+  //   }
+  // };
+
+  const handleHighQualityRender = () => {
+    const scene = sceneRef.current;
+    const camera = cameraRef.current;
+    const renderer = rendererRef.current;
+
+    console.log(scene);
+    return;
+
+    // Create a composer with higher resolution
+    const renderWidth = 2048;
+    const renderHeight = 2048;
+
+    const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(
+      renderWidth,
+      renderHeight,
+      { type: THREE.HalfFloatType }
+    ));
+
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new SMAAPass(renderWidth, renderHeight)); // For antialiasing
+
+    // Render
+    composer.render();
+
+    // Convert to image
+    const canvas = document.createElement('canvas');
+    canvas.width = renderWidth;
+    canvas.height = renderHeight;
+    const ctx = canvas.getContext('2d');
+
+    const imageData = new ImageData(
+      new Uint8ClampedArray(composer.readBuffer.texture.image.data),
+      renderWidth,
+      renderHeight
+    );
+    ctx.putImageData(imageData, 0, 0);
+
+    // Download
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'high_quality_render.png';
+    link.click();
+
+    // Clean up
+    composer.dispose();
+  };
+
+  // const sendToBlenderServer = async () => {
+  //   console.log("sendToBlenderServer");
+  //   try {
+  //     const scene = sceneRef.current;
+  //     const camera = cameraRef.current;
+  //     if (!scene || !camera) throw new Error('Scene or camera missing');
+
+  //     // ✅ Clone scene and include camera
+  //     const exportScene = scene.clone();
+  //     exportScene.add(camera.clone());
+
+  //     // ✅ Export scene as GLB
+  //     const exporter = new GLTFExporter();
+  //     const glb = await new Promise((resolve, reject) => {
+  //       exporter.parse(
+  //         exportScene,
+  //         (result) => {
+  //           if (result instanceof ArrayBuffer) {
+  //             resolve(result);
+  //           } else {
+  //             reject(new Error('Exported data is not binary'));
+  //           }
+  //         },
+  //         reject,
+  //         { binary: true, trs: true }
+  //       );
+  //     });
+
+  //     if (glb.byteLength < 100) {
+  //       throw new Error('Exported GLB is too small - likely empty');
+  //     }
+
+  //     // ✅ Prepare upload
+  //     const formData = new FormData();
+  //     formData.append('model', new Blob([glb], { type: 'model/gltf-binary' }), 'scene.glb');
+
+  //     // ✅ Send to Blender render server
+  //     const response = await fetch('http://192.168.29.132:3020/render', {
+  //       method: 'POST',
+  //       body: formData
+  //     });
+
+  //     if (!response.ok) {
+  //       const error = await response.json();
+  //       throw new Error(error.error || 'Render failed');
+  //     }
+
+  //     // ✅ Receive image
+  //     const blob = await response.blob();
+  //     const url = URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = 'render.png';
+  //     a.click();
+
+  //     // ✅ Cleanup
+  //     setTimeout(() => URL.revokeObjectURL(url), 100);
+
+  //   } catch (error) {
+  //     console.error('Rendering failed:', error);
+  //     alert(`Render failed: ${error.message}`);
+  //   }
+  // };
+
+
+  const sendToBlenderServer = async () => {
+
+    var currentdate = new Date();
+    var datetime = "Last Sync: " + currentdate.getDay() + "/" + currentdate.getMonth()
+      + "/" + currentdate.getFullYear() + " @ "
+      + currentdate.getHours() + ":"
+      + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+      
+      console.log(datetime);
+      
+
+    console.log("sendToBlenderServer->>>>");
+    handleZoomChange({ target: { value: 68 } });
+    try {
+      const scene = sceneRef.current;
+      const camera = cameraRef.current;
+
+      if (!scene || !camera) throw new Error("Scene or camera missing");
+
+      // ✅ Clone the camera with full metadata and attach to the scene before export
+      const exportCamera = camera.clone();
+      exportCamera.name = "ExportCamera"; // helps identify it in Blender
+      scene.add(exportCamera);
+
+      // ✅ Export scene as GLB
+      const exporter = new GLTFExporter();
+      const glb = await new Promise((resolve, reject) => {
+        exporter.parse(
+          scene,
+          (result) => {
+            if (result instanceof ArrayBuffer) {
+              resolve(result);
+            } else {
+              reject(new Error("Exported data is not binary"));
+            }
+          },
+          reject,
+          {
+            binary: true,
+            trs: true,
+            onlyVisible: false,
+            embedImages: true,
+            includeCustomExtensions: true,
+          }
+        );
+      });
+
+      if (glb.byteLength < 100) {
+        throw new Error("Exported GLB is too small — likely empty");
+      }
+
+      // ✅ Prepare form data
+      const formData = new FormData();
+      formData.append("model", new Blob([glb], { type: "model/gltf-binary" }), "scene.glb");
+      handleZoomChange({ target: { value: 50 } });
+      // ✅ Send to Blender server
+      const response = await fetch("http://192.168.29.132:3020/render", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Render failed");
+      }
+
+      // ✅ Receive image
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "render.png";
+      a.click();
+
+      // ✅ Cleanup
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+
+      // ✅ Optional: Remove temporary camera from scene
+      scene.remove(exportCamera);
+
+      var currentdate = new Date();
+    var datetime = "Last Sync 2: " + currentdate.getDay() + "/" + currentdate.getMonth()
+      + "/" + currentdate.getFullYear() + " @ "
+      + currentdate.getHours() + ":"
+      + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+      
+      console.log(datetime);
+
+    } catch (error) {
+      console.error("Rendering failed:", error);
+      alert(`Render failed: ${error.message}`);
+    }
   };
 
 
@@ -1519,6 +1813,17 @@ const ThreejsOLD = () => {
           </button>
 
           <br></br>
+
+          <div style={{ margin: "10px" }}>
+            <button
+              // onClick={handleHighQualityRender}
+              onClick={sendToBlenderServer}
+              style={{ padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+            >
+              Render High-Quality Image
+            </button>
+          </div>
+
           <button style={{ margin: "10px" }} disabled={useOrbitControls}
             onClick={() => setMouseControls(!mouseControls)} >Mouse control {mouseControls ? 'on' : 'off'} </button>
 
@@ -1653,26 +1958,26 @@ const ThreejsOLD = () => {
             </button>
 
             <button
-              onClick={() => rotateModel0(keyframes0,2000)}
+              onClick={() => rotateModel0(keyframes0, 3000)}
               style={{ padding: "10px" }}
               disabled={isAnimating}>
               Rotate Model0
             </button>
 
             <button
-              onClick={() => rotateModel0(keyframes1,1000)}
+              onClick={() => rotateModel0(keyframes1, 2000)}
               style={{ padding: "10px" }}
               disabled={isAnimating}>
               Rotate Model1
             </button>
 
             <button
-              onClick={() => rotateModel0(keyframes2,3000)}
+              onClick={() => rotateModel0(keyframes2, 3000)}
               style={{ padding: "10px" }}
               disabled={isAnimating}>
               Rotate Model1
             </button>
-          
+
           </div>
 
         </div>
