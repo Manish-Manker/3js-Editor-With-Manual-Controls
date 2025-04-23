@@ -67,6 +67,7 @@ const ThreejsOLD = () => {
   const gizmoRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const [selectedResolution, setSelectedResolution] = useState('4K');
 
   useEffect(() => {
     const currentMount = mountRef.current;
@@ -1197,18 +1198,24 @@ const ThreejsOLD = () => {
     requestAnimationFrame(animate);
   };
 
+  const rotate = [
+    { positionX: 0.4, cameraZ: 10, duration: 500 },
+    { positionX: -0.4, positionY: -0.8, rotationY: Math.PI, cameraZ: 8, duration: 200 },
+    { positionX: 0.4, rotationY: Math.PI * 2, cameraZ: 5.5, duration: 1000 }
+  ]
+
   const keyframes0 = [
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 12.5 },
-    { positionX: -0.8, positionY: -0.4, positionZ: 0, rotationY: Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 8 },
-    { positionX: 0.2, positionY: -0.4, positionZ: 0, rotationY: Math.PI, rotationX: 0, rotationZ: 0, cameraZ: 4 },
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 8.5 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 12.5, duration: 1000 },
+    { positionX: -0.8, positionY: -0.4, positionZ: 0, rotationY: Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 8, duration: 500 },
+    { positionX: 0.2, positionY: -0.4, positionZ: 0, rotationY: Math.PI, rotationX: 0, rotationZ: 0, cameraZ: 4, duration: 1000 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 8.5, duration: 500 },
   ];
 
   const keyframes1 = [
-    { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.2, positionZ: 0, rotationY: Math.PI / 4, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
-    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 500 },
+    { positionX: 0, positionY: -0.2, positionZ: 0, rotationY: Math.PI / 4, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 500 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 500 },
   ];
 
   const keyframes2 = [
@@ -1218,172 +1225,483 @@ const ThreejsOLD = () => {
     { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
   ];
 
+  const keyframes3 = [
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 15 },
+    { positionX: 1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 13 },
+    { positionX: -1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 10 },
+    { positionX: 0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 8 },
+    { positionX: -0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 6.5 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: -Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5 },
+  ];
+
 
   // Trigger the animation
+  // working animation 
+  // const rotateModel0 = (keyframes, d, shouldRecord = false) => {
+  //   if (!modelRef.current || !cameraRef.current || !rendererRef.current) return;
 
-  const rotateModel0 = (keyframes, d) => {
-    if (!modelRef.current || !cameraRef.current) return;
+  //   // Save initial states
+  //   const initialState = {
+  //     camera: {
+  //       position: cameraRef.current.position.clone(),
+  //       rotation: cameraRef.current.rotation.clone()
+  //     },
+  //     model: {
+  //       position: modelRef.current.position.clone(),
+  //       rotation: modelRef.current.rotation.clone()
+  //     }
+  //   };
 
-    const duration = d; // Total duration of the animation in milliseconds
+  //   // Reset to starting position
+  //   cameraRef.current.position.set(0, 0, 5.5);
+  //   modelRef.current.position.set(0, 0, 0);
+  //   modelRef.current.rotation.set(0, 0, 0);
+
+  //   const duration = d;
+  //   const startTime = performance.now();
+
+  //   setIsAnimating(true);
+
+  //   // Setup video recording
+  //   let mediaRecorder = null;
+  //   if (shouldRecord) {
+
+  //     //for transparent video
+  //     // const originalBackground = sceneRef.current.background;
+  //     // sceneRef.current.background = null;
+  //     // rendererRef.current.setClearColor(0x000000, 0);
+
+  //     const canvas = rendererRef.current.domElement;
+  //     const stream = canvas.captureStream(60);
+  //     mediaRecorder = new MediaRecorder(stream, {
+  //       mimeType: 'video/webm;codecs=vp9',
+  //       videoBitsPerSecond: 10000000,
+  //     });
+
+  //     const chunks = [];
+  //     mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+  //     mediaRecorder.onstop = () => {
+  //       //for transparent video
+  //       // sceneRef.current.background = originalBackground;
+  //       const blob = new Blob(chunks, { type: 'video/webm' });
+  //       const url = URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = 'animation.webm';
+  //       a.click();
+  //       URL.revokeObjectURL(url);
+  //     };
+
+  //     mediaRecorder.start();
+  //   }
+
+  //   // Easing function
+  //   const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+  //   const animate = (time) => {
+  //     const elapsedTime = time - startTime;
+  //     const rawProgress = Math.min(elapsedTime / duration, 1);
+  //     const progress = easeInOutQuad(rawProgress);
+
+  //     const segmentCount = keyframes.length - 1;
+  //     const segmentDuration = 1 / segmentCount;
+  //     const currentSegment = Math.floor(progress / segmentDuration);
+  //     const segmentProgress = (progress % segmentDuration) / segmentDuration;
+
+  //     if (currentSegment < segmentCount) {
+  //       const startKeyframe = keyframes[currentSegment];
+  //       const endKeyframe = keyframes[currentSegment + 1];
+
+  //       if (startKeyframe.rotationY !== undefined && endKeyframe.rotationY !== undefined) {
+  //         modelRef.current.rotation.y = THREE.MathUtils.lerp(
+  //           startKeyframe.rotationY,
+  //           endKeyframe.rotationY,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.rotationX !== undefined && endKeyframe.rotationX !== undefined) {
+  //         modelRef.current.rotation.x = THREE.MathUtils.lerp(
+  //           startKeyframe.rotationX,
+  //           endKeyframe.rotationX,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.rotationZ !== undefined && endKeyframe.rotationZ !== undefined) {
+  //         modelRef.current.rotation.z = THREE.MathUtils.lerp(
+  //           startKeyframe.rotationZ,
+  //           endKeyframe.rotationZ,
+  //           segmentProgress
+  //         );
+  //       }
+
+  //       if (startKeyframe.positionX !== undefined && endKeyframe.positionX !== undefined) {
+  //         modelRef.current.position.x = THREE.MathUtils.lerp(
+  //           startKeyframe.positionX,
+  //           endKeyframe.positionX,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.positionY !== undefined && endKeyframe.positionY !== undefined) {
+  //         modelRef.current.position.y = THREE.MathUtils.lerp(
+  //           startKeyframe.positionY,
+  //           endKeyframe.positionY,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.positionZ !== undefined && endKeyframe.positionZ !== undefined) {
+  //         modelRef.current.position.z = THREE.MathUtils.lerp(
+  //           startKeyframe.positionZ,
+  //           endKeyframe.positionZ,
+  //           segmentProgress
+  //         );
+  //       }
+
+  //       if (startKeyframe.cameraX !== undefined && endKeyframe.cameraX !== undefined) {
+  //         cameraRef.current.position.x = THREE.MathUtils.lerp(
+  //           startKeyframe.cameraX,
+  //           endKeyframe.cameraX,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.cameraY !== undefined && endKeyframe.cameraY !== undefined) {
+  //         cameraRef.current.position.y = THREE.MathUtils.lerp(
+  //           startKeyframe.cameraY,
+  //           endKeyframe.cameraY,
+  //           segmentProgress
+  //         );
+  //       }
+  //       if (startKeyframe.cameraZ !== undefined && endKeyframe.cameraZ !== undefined) {
+  //         cameraRef.current.position.z = THREE.MathUtils.lerp(
+  //           startKeyframe.cameraZ,
+  //           endKeyframe.cameraZ,
+  //           segmentProgress
+  //         );
+  //       }
+
+  //       // Camera rotation interpolation
+  //     if (startKeyframe.cameraRotationX !== undefined && endKeyframe.cameraRotationX !== undefined) {
+  //       cameraRef.current.rotation.x = THREE.MathUtils.lerp(
+  //         startKeyframe.cameraRotationX,
+  //         endKeyframe.cameraRotationX,
+  //         segmentProgress
+  //       );
+  //     }
+  //     if (startKeyframe.cameraRotationY !== undefined && endKeyframe.cameraRotationY !== undefined) {
+  //       cameraRef.current.rotation.y = THREE.MathUtils.lerp(
+  //         startKeyframe.cameraRotationY,
+  //         endKeyframe.cameraRotationY,
+  //         segmentProgress
+  //       );
+  //     }
+  //     if (startKeyframe.cameraRotationZ !== undefined && endKeyframe.cameraRotationZ !== undefined) {
+  //       cameraRef.current.rotation.z = THREE.MathUtils.lerp(
+  //         startKeyframe.cameraRotationZ,
+  //         endKeyframe.cameraRotationZ,
+  //         segmentProgress
+  //       );
+  //     }
+
+  //     // Apply keyframe duration if specified
+  //     const frameDuration = startKeyframe.duration || d / segmentCount;
+  //     const timeScale = frameDuration / d;
+
+  //       // Render the frame
+  //       rendererRef.current.render(sceneRef.current, cameraRef.current);
+  //     }
+
+  //     if (progress < 1) {
+  //       requestAnimationFrame(animate);
+  //     } else {
+
+  //       cameraRef.current.position.copy(initialState.camera.position);
+  //       cameraRef.current.rotation.copy(initialState.camera.rotation);
+  //       modelRef.current.position.copy(initialState.model.position);
+  //       modelRef.current.rotation.copy(initialState.model.rotation);
+
+  //       if (mediaRecorder) {
+  //         mediaRecorder.stop();
+  //       }
+  //       setIsAnimating(false);
+  //     }
+  //   };
+  //   requestAnimationFrame(animate);
+  // };
+
+  const rotateModel0 = (keyframes, shouldRecord = false) => {
+    if (!modelRef.current || !cameraRef.current || !rendererRef.current) return;
+
+    // Save initial states
+    const initialState = {
+      camera: {
+        position: cameraRef.current.position.clone(),
+        rotation: cameraRef.current.rotation.clone()
+      },
+      model: {
+        position: modelRef.current.position.clone(),
+        rotation: modelRef.current.rotation.clone()
+      }
+    };
+
+    // Reset to starting position
+    cameraRef.current.position.set(0, 0, 5.5);
+    modelRef.current.position.set(0, 0, 0);
+    modelRef.current.rotation.set(0, 0, 0);
+
+    // Calculate total duration
+    // const totalDuration = keyframes.reduce((sum, frame) => sum + (frame.duration || 3000), 0);
+
     const startTime = performance.now();
+    setIsAnimating(true);
 
-    // Easing function (easeInOutQuad)
-    const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+    // Setup video recording if needed
+    let mediaRecorder = null;
 
-    const animate = (time) => {
-      const elapsedTime = time - startTime;
-      const rawProgress = Math.min(elapsedTime / duration, 1); // Calculate raw progress (0 to 1)
-      const progress = easeInOutQuad(rawProgress); // Apply easing to the progress
+    // download video in UI side
+    if (shouldRecord) {
 
-      // Determine the current segment of the animation
-      const segmentCount = keyframes.length - 1;
-      const segmentDuration = 1 / segmentCount; // Duration of each segment as a fraction of total progress
-      const currentSegment = Math.floor(progress / segmentDuration);
-      const segmentProgress = (progress % segmentDuration) / segmentDuration; // Progress within the current segment
+      const originalWidth = rendererRef.current.domElement.width;
+      const originalHeight = rendererRef.current.domElement.height;
 
-      if (currentSegment < segmentCount) {
-        const startKeyframe = keyframes[currentSegment];
-        const endKeyframe = keyframes[currentSegment + 1];
+      const resolution = {
+        'HD': { width: 1920, height: 1080 },
+        '2K': { width: 2560, height: 1440 },
+        '4K': { width: 3840, height: 2160 }
+      };
 
-        // Interpolate model's rotation
-        if (startKeyframe.rotationY !== undefined && endKeyframe.rotationY !== undefined) {
-          modelRef.current.rotation.y = THREE.MathUtils.lerp(
-            startKeyframe.rotationY,
-            endKeyframe.rotationY,
-            segmentProgress
-          );
-        }
-        if (startKeyframe.rotationX !== undefined && endKeyframe.rotationX !== undefined) {
-          modelRef.current.rotation.x = THREE.MathUtils.lerp(
-            startKeyframe.rotationX,
-            endKeyframe.rotationX,
-            segmentProgress
-          );
-        }
-        if (startKeyframe.rotationZ !== undefined && endKeyframe.rotationZ !== undefined) {
-          modelRef.current.rotation.z = THREE.MathUtils.lerp(
-            startKeyframe.rotationZ,
-            endKeyframe.rotationZ,
-            segmentProgress
-          );
-        }
+      const selectedRes = resolution[selectedResolution];
 
-        // Interpolate model's position
-        if (startKeyframe.positionX !== undefined && endKeyframe.positionX !== undefined) {
-          modelRef.current.position.x = THREE.MathUtils.lerp(
-            startKeyframe.positionX,
-            endKeyframe.positionX,
-            segmentProgress
-          );
-        }
-        if (startKeyframe.positionY !== undefined && endKeyframe.positionY !== undefined) {
-          modelRef.current.position.y = THREE.MathUtils.lerp(
-            startKeyframe.positionY,
-            endKeyframe.positionY,
-            segmentProgress
-          );
-        }
-        if (startKeyframe.positionZ !== undefined && endKeyframe.positionZ !== undefined) {
-          modelRef.current.position.z = THREE.MathUtils.lerp(
-            startKeyframe.positionZ,
-            endKeyframe.positionZ,
-            segmentProgress
-          );
-        }
+      // Optimize renderer settings for recording
+      rendererRef.current.setPixelRatio(1); // Reduce pixel ratio for better performance
+      rendererRef.current.setSize(selectedRes.width, selectedRes.height);
+      cameraRef.current.aspect = selectedRes.width / selectedRes.height;
+      cameraRef.current.updateProjectionMatrix();
 
-        // Interpolate camera's Z position
-        if (startKeyframe.cameraZ !== undefined && endKeyframe.cameraZ !== undefined) {
-          cameraRef.current.position.z = THREE.MathUtils.lerp(
-            startKeyframe.cameraZ,
-            endKeyframe.cameraZ,
-            segmentProgress
-          );
-        }
+      const canvas = rendererRef.current.domElement;
+      const stream = canvas.captureStream(30); // Increase frames per second
+
+      mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 8000000, // Adjust bitrate for better quality
+      });
+
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+
+      mediaRecorder.onstop = () => {
+        // Reset renderer settings
+        rendererRef.current.setPixelRatio(window.devicePixelRatio);
+        rendererRef.current.setSize(originalWidth, originalHeight);
+        cameraRef.current.aspect = originalWidth / originalHeight;
+        cameraRef.current.updateProjectionMatrix();
+
+        const blob = new Blob(chunks, {
+          type: 'video/webm',
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `animation-${selectedRes.width}x${selectedRes.height}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      mediaRecorder.start();
+    }
+
+    let breakFlag = false;
+    // render on ffmpeg side
+    // if (shouldRecord) {
+    //   console.log(shouldRecord, "shouldRecord");
+    //   const originalWidth = rendererRef.current.domElement.width;
+    //   const originalHeight = rendererRef.current.domElement.height;
+
+    //   const resolution = {
+    //     'HD': { width: 1920, height: 1080 },
+    //     '2K': { width: 2560, height: 1440 },
+    //     '4K': { width: 3840, height: 2160 }
+    //   };
+    //   const selectedRes = resolution[selectedResolution] ;
+    //   rendererRef.current.setSize(selectedRes.width, selectedRes.height);
+    //     cameraRef.current.aspect = selectedRes.width / selectedRes.height;
+    //     cameraRef.current.updateProjectionMatrix();
+
+    //   const canvas = rendererRef.current.domElement;
+    //   const stream = canvas.captureStream(30);
+
+    //   mediaRecorder = new MediaRecorder(stream, {
+    //     mimeType: 'video/mp4',
+    //     videoBitsPerSecond: 8000000
+    //   });
+
+    //   const chunks = [];
+    //   mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+
+    //   mediaRecorder.onstop = async () => {
+    //     // Reset renderer settings
+    //     rendererRef.current.setSize(originalWidth, originalHeight);
+    //     cameraRef.current.aspect = originalWidth / originalHeight;
+    //     cameraRef.current.updateProjectionMatrix();
+    //     try {
+
+    //       const blob = new Blob(chunks, { type: 'video/mp4' });
+    //       const formData = new FormData();
+    //       formData.append('video', blob, 'animation.mp4');
+    //       formData.append('resolution', selectedResolution);
+
+    //       const response = await fetch('http://192.168.29.132:3022/process-video', {
+    //         method: 'POST',
+    //         body: formData,
+    //         headers: {
+    //           'Accept': 'video/mp4'
+    //         }
+    //       });
+
+    //       if (!response.ok) {
+    //         const errorData = await response.json();
+    //         throw new Error(errorData.error || 'Video processing failed');
+    //       }
+
+    //       const processedBlob = await response.blob();
+    //       if (!processedBlob.size) {
+    //         throw new Error('Received empty video file');
+    //       }
+
+    //       // Download the processed video
+    //       const url = URL.createObjectURL(processedBlob);
+    //       const a = document.createElement('a');
+    //       a.href = url;
+    //       a.download = `animation-${selectedResolution}.mp4`;
+    //       a.click();
+    //       URL.revokeObjectURL(url);
+
+    //     } catch (error) {
+    //       console.error('Video processing failed:', error);
+    //       alert(`Failed to process video: ${error.message}`);
+    //     } finally {
+
+    //     }
+    //   };
+
+    //   mediaRecorder.start();
+    // }
+
+
+    const animate = (currentTime) => {
+      const elapsedTime = currentTime - startTime;
+
+      // Find current keyframe
+      let currentFrameIndex = 0;
+      let timeInAnimation = elapsedTime;
+
+      // Calculate which keyframe we're currently in
+      while (timeInAnimation > 0 && currentFrameIndex < keyframes.length - 1) {
+        const frameDuration = keyframes[currentFrameIndex].duration || 3000;
+        if (timeInAnimation < frameDuration) break;
+        timeInAnimation -= frameDuration;
+        currentFrameIndex++;
       }
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        // Animation complete
-        setIsAnimating(false);
+      // If we've reached the end of the animation
+      if (currentFrameIndex >= keyframes.length - 1) {
+        // Reset to initial state
+        setTimeout(() => {
+          cameraRef.current.position.copy(initialState.camera.position);
+          cameraRef.current.rotation.copy(initialState.camera.rotation);
+          modelRef.current.position.copy(initialState.model.position);
+          modelRef.current.rotation.copy(initialState.model.rotation);
+
+          if (mediaRecorder) {
+            mediaRecorder.stop();
+          }
+          setIsAnimating(false);
+        }, 300);
+        return;
       }
+
+      const currentFrame = keyframes[currentFrameIndex];
+      const nextFrame = keyframes[currentFrameIndex + 1];
+      const frameDuration = currentFrame.duration || 3000;
+
+      // Calculate progress within current frame
+      const frameProgress = Math.min(timeInAnimation / frameDuration, 1);
+
+      // Interpolate all properties
+      if (currentFrame && nextFrame) {
+        // Model position
+        modelRef.current.position.x = THREE.MathUtils.lerp(
+          currentFrame.positionX || 0,
+          nextFrame.positionX || 0,
+          frameProgress
+        );
+        modelRef.current.position.y = THREE.MathUtils.lerp(
+          currentFrame.positionY || 0,
+          nextFrame.positionY || 0,
+          frameProgress
+        );
+        modelRef.current.position.z = THREE.MathUtils.lerp(
+          currentFrame.positionZ || 0,
+          nextFrame.positionZ || 0,
+          frameProgress
+        );
+
+        // Model rotation
+        modelRef.current.rotation.y = THREE.MathUtils.lerp(
+          currentFrame.rotationY || 0,
+          nextFrame.rotationY || 0,
+          frameProgress
+        );
+        modelRef.current.rotation.x = THREE.MathUtils.lerp(
+          currentFrame.rotationX || 0,
+          nextFrame.rotationX || 0,
+          frameProgress
+        );
+        modelRef.current.rotation.z = THREE.MathUtils.lerp(
+          currentFrame.rotationZ || 0,
+          nextFrame.rotationZ || 0,
+          frameProgress
+        );
+
+        // Camera position
+        cameraRef.current.position.z = THREE.MathUtils.lerp(
+          currentFrame.cameraZ || 5.5,
+          nextFrame.cameraZ || 5.5,
+          frameProgress
+        );
+
+        // Camera rotation
+        if (currentFrame.cameraRotationX !== undefined) {
+          cameraRef.current.rotation.x = THREE.MathUtils.lerp(
+            currentFrame.cameraRotationX,
+            nextFrame.cameraRotationX || 0,
+            frameProgress
+          );
+        }
+        if (currentFrame.cameraRotationY !== undefined) {
+          cameraRef.current.rotation.y = THREE.MathUtils.lerp(
+            currentFrame.cameraRotationY,
+            nextFrame.cameraRotationY || 0,
+            frameProgress
+          );
+        }
+        if (currentFrame.cameraRotationZ !== undefined) {
+          cameraRef.current.rotation.z = THREE.MathUtils.lerp(
+            currentFrame.cameraRotationZ,
+            nextFrame.cameraRotationZ || 0,
+            frameProgress
+          );
+        }
+
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+      }
+
+      requestAnimationFrame(animate);
     };
 
     requestAnimationFrame(animate);
   };
-
-  // Correct import for latest version (tested with three-gpu-pathtracer@1.0.5)
-
-  // const handleHighQualityRender = async () => {
-
-  //   const scene = sceneRef.current;
-  //   const camera = cameraRef.current;
-  //   const renderer = rendererRef.current;
-
-  //   if (!renderer.capabilities.isWebGL2) {
-  //     alert('WebGL 2.0 required for path tracing');
-  //     return;
-  //   }
-  //   try {
-  //     // 1. Initialize path tracer
-  //     const pathTracer = new GPUPathTracer({
-  //       renderer,
-  //       camera,
-  //       scene,
-  //       resolutionScale: 1.0, // 1.0 = full resolution
-  //       samplesPerFrame: 4,   // Samples per animation frame
-  //       tiles: [2, 2]         // Subdivision for progressive rendering [x,y]
-  //     });
-
-  //     // 2. Configure quality settings
-  //     pathTracer.material = new PhysicalPathTracingMaterial();
-  //     pathTracer.material.samples = 256; // Total target samples
-  //     pathTracer.material.bounces = 8;   // Ray bounces
-
-  //     // 3. Set environment lighting
-  //     if (scene.environment) {
-  //       pathTracer.material.envMap = scene.environment;
-  //       pathTracer.material.envMapIntensity = 1.0;
-  //     }
-
-  //     // 4. Progressive rendering
-  //     const canvas = document.createElement('canvas');
-  //     canvas.width = 2048;
-  //     canvas.height = 2048;
-  //     const ctx = canvas.getContext('2d');
-
-  //     // Render loop
-  //     const totalSamples = 256;
-  //     let currentSamples = 0;
-
-  //     while (currentSamples < totalSamples) {
-  //       await pathTracer.update();
-  //       currentSamples += pathTracer.samplesPerFrame;
-
-  //       // Optional: Update progress display
-  //       console.log(`Rendered ${currentSamples}/${totalSamples} samples`);
-
-  //       // Copy current state to canvas
-  //       ctx.drawImage(pathTracer.getCanvas(), 0, 0);
-  //     }
-
-  //     // 5. Final download
-  //     canvas.toBlob(blob => {
-  //       const link = document.createElement('a');
-  //       link.href = URL.createObjectURL(blob);
-  //       link.download = 'path_traced_render.png';
-  //       link.click();
-  //     }, 'image/png', 1.0);
-
-  //     // Cleanup
-  //     pathTracer.dispose();
-
-  //   } catch (error) {
-  //     console.error('Path tracing error:', error);
-  //     // Fallback to standard rendering if path tracing fails
-  //     handleStandardRender();
-  //   }
-  // };
 
   const handleHighQualityRender = () => {
     const scene = sceneRef.current;
@@ -1432,70 +1750,6 @@ const ThreejsOLD = () => {
     composer.dispose();
   };
 
-  // const sendToBlenderServer = async () => {
-  //   console.log("sendToBlenderServer");
-  //   try {
-  //     const scene = sceneRef.current;
-  //     const camera = cameraRef.current;
-  //     if (!scene || !camera) throw new Error('Scene or camera missing');
-
-  //     // ✅ Clone scene and include camera
-  //     const exportScene = scene.clone();
-  //     exportScene.add(camera.clone());
-
-  //     // ✅ Export scene as GLB
-  //     const exporter = new GLTFExporter();
-  //     const glb = await new Promise((resolve, reject) => {
-  //       exporter.parse(
-  //         exportScene,
-  //         (result) => {
-  //           if (result instanceof ArrayBuffer) {
-  //             resolve(result);
-  //           } else {
-  //             reject(new Error('Exported data is not binary'));
-  //           }
-  //         },
-  //         reject,
-  //         { binary: true, trs: true }
-  //       );
-  //     });
-
-  //     if (glb.byteLength < 100) {
-  //       throw new Error('Exported GLB is too small - likely empty');
-  //     }
-
-  //     // ✅ Prepare upload
-  //     const formData = new FormData();
-  //     formData.append('model', new Blob([glb], { type: 'model/gltf-binary' }), 'scene.glb');
-
-  //     // ✅ Send to Blender render server
-  //     const response = await fetch('http://192.168.29.132:3020/render', {
-  //       method: 'POST',
-  //       body: formData
-  //     });
-
-  //     if (!response.ok) {
-  //       const error = await response.json();
-  //       throw new Error(error.error || 'Render failed');
-  //     }
-
-  //     // ✅ Receive image
-  //     const blob = await response.blob();
-  //     const url = URL.createObjectURL(blob);
-  //     const a = document.createElement('a');
-  //     a.href = url;
-  //     a.download = 'render.png';
-  //     a.click();
-
-  //     // ✅ Cleanup
-  //     setTimeout(() => URL.revokeObjectURL(url), 100);
-
-  //   } catch (error) {
-  //     console.error('Rendering failed:', error);
-  //     alert(`Render failed: ${error.message}`);
-  //   }
-  // };
-
 
   const sendToBlenderServer = async () => {
 
@@ -1504,9 +1758,9 @@ const ThreejsOLD = () => {
       + "/" + currentdate.getFullYear() + " @ "
       + currentdate.getHours() + ":"
       + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-      
-      console.log(datetime);
-      
+
+    console.log(datetime);
+
 
     console.log("sendToBlenderServer->>>>");
     handleZoomChange({ target: { value: 68 } });
@@ -1578,11 +1832,11 @@ const ThreejsOLD = () => {
       scene.remove(exportCamera);
 
       var currentdate = new Date();
-    var datetime = "Last Sync 2: " + currentdate.getDay() + "/" + currentdate.getMonth()
-      + "/" + currentdate.getFullYear() + " @ "
-      + currentdate.getHours() + ":"
-      + currentdate.getMinutes() + ":" + currentdate.getSeconds();
-      
+      var datetime = "Last Sync 2: " + currentdate.getDay() + "/" + currentdate.getMonth()
+        + "/" + currentdate.getFullYear() + " @ "
+        + currentdate.getHours() + ":"
+        + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+
       console.log(datetime);
 
     } catch (error) {
@@ -1911,20 +2165,7 @@ const ThreejsOLD = () => {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "10px" }}>
-            {/* <button
-              onClick={playGLTFAnimation}
-              disabled={isAnimating} // Optional: Disable the button while animating
-              style={{ padding: "10px" }}
-            >
-              Play GLTF Animation
-            </button>
 
-            <button
-              onClick={stopGLTFAnimation}
-              style={{ padding: "10px" }}
-            >
-              Stop Animation
-            </button> */}
 
             <button
               onClick={() => rotateModel(true, false, false, false)}
@@ -1957,26 +2198,87 @@ const ThreejsOLD = () => {
               Rotate Model Vertical , Zoom
             </button>
 
-            <button
-              onClick={() => rotateModel0(keyframes0, 3000)}
-              style={{ padding: "10px" }}
-              disabled={isAnimating}>
-              Rotate Model0
-            </button>
+            <h3>Download animation</h3>
 
-            <button
-              onClick={() => rotateModel0(keyframes1, 2000)}
-              style={{ padding: "10px" }}
-              disabled={isAnimating}>
-              Rotate Model1
-            </button>
+            <select
+              value={selectedResolution}
+              onChange={(e) => setSelectedResolution(e.target.value)}
+              style={{ margin: "10px" }}
+            >
+              <option value="HD">HD (1080p)</option>
+              <option value="2K">2K</option>
+              <option value="4K">4K</option>
+            </select>
 
-            <button
-              onClick={() => rotateModel0(keyframes2, 3000)}
-              style={{ padding: "10px" }}
-              disabled={isAnimating}>
-              Rotate Model1
-            </button>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(rotate, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Rotate Model 360°
+              </button>
+              <button
+                onClick={() => rotateModel0(rotate, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 360°
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes0, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 1
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes0, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 1
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes1, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 2
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes1, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 2
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes2, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 3
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes2, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 3
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes3, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 4
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes3, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 4
+              </button>
+            </div>
 
           </div>
 
