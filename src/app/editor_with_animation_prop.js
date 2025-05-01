@@ -1913,62 +1913,32 @@ const ThreejsOLD = () => {
   };
 
 
-  //  const handleWatermarkImageChange = (event) => {
-  //     const file = event.target.files[0];
-  //     if (!file) return;
+   const handleWatermarkImageChange = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
     
-  //     const reader = new FileReader();
-  //     reader.onload = function (e) {
-  //       const watermarkTexture = new THREE.TextureLoader().load(e.target.result, (texture) => {
-  //         const material = new THREE.MeshPhysicalMaterial({
-  //           map: texture,
-  //           transparent: true, 
-  //           opacity: 0.23,
-  //           depthWrite: false,
-  //           depthTest: false,
-  //           alphaTest: 0.0,          
-  //       });
-  //       // const geometry = new THREE.PlaneGeometry(cameraRef.current.aspect * 4, 4);
-  //       const geometry = new THREE.PlaneGeometry(1,1);
-  //       const mesh = new THREE.Mesh(geometry, material);
-  //       mesh.position.set(0, 0, -2);
-  //       // mesh.scale.set(1, 1, 1);
-  //       // sceneRef.current.add(mesh);
-  //       cameraRef.current.add(mesh);
-  //       console.log(cameraRef.current);
-  //       });
-  //     };
-  //     reader.readAsDataURL(file);
-  //   };
-
-  const handleWatermarkImageChange = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const texture = new THREE.TextureLoader().load(e.target.result, (texture) => {
-            const spriteMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
-                opacity: 0.23,
-                // depthTest: false,
-                // depthWrite: false
-            });
-
-            const sprite = new THREE.Sprite(spriteMaterial);
-            
-            const imageAspect = texture.image.width / texture.image.height;
-            sprite.scale.set(imageAspect, imageAspect, 1);
-            
-            // Position in front of camera
-            sprite.position.set(0, 0, -2.2);
-            
-            cameraRef.current.add(sprite);
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const watermarkTexture = new THREE.TextureLoader().load(e.target.result, (texture) => {
+          const material = new THREE.MeshPhysicalMaterial({
+            map: texture,
+            transparent: true, 
+            opacity: 0.23,
+            depthWrite: false,
+            depthTest: false,
+            alphaTest: 0.0,          
         });
+        // const geometry = new THREE.PlaneGeometry(cameraRef.current.aspect * 4, 4);
+        const geometry = new THREE.PlaneGeometry(1,1);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 0, -2);
+        // mesh.scale.set(1, 1, 1);
+        // sceneRef.current.add(mesh);
+        cameraRef.current.add(mesh);
+        });
+      };
+      reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
-};
 
   return (
     <>
