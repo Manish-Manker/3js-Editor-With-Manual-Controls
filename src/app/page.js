@@ -50,7 +50,7 @@ const ThreejsOLD = () => {
   const [modelTransmission, setModelTransmission] = useState(1);
 
 
-  const [isGlossy, setIsGlossy] = useState('plastic');
+  const [isGlossy, setIsGlossy] = useState('matt');
   const [camrotation, setcamrotation] = useState(0);
 
   const pivotRef = useRef(null);
@@ -71,6 +71,8 @@ const ThreejsOLD = () => {
   const [selectedResolution, setSelectedResolution] = useState('HD');
 
   const [isRecording, setIsRecording] = useState(false);
+
+  const [transparentBG, setTransparentBG] = useState(false);
 
   useEffect(() => {
     const currentMount = mountRef.current;
@@ -845,6 +847,7 @@ const ThreejsOLD = () => {
           texture.wrapT = THREE.ClampToEdgeWrapping;
           texture.anisotropy = rendererRef.current.capabilities.getMaxAnisotropy();
           texture.mapping = THREE.UVMapping;
+          texture.material = selectedMesh.material;
           selectedMesh.material.map = texture;
           selectedMesh.material.needsUpdate = true;
         });
@@ -1003,6 +1006,7 @@ const ThreejsOLD = () => {
           if (Array.isArray(child.material)) {
             child.material.forEach((mat) => {
               mat.roughness = value;
+              mat.roughnessMap
             });
           } else {
             child.material.roughness = value;
@@ -1202,9 +1206,9 @@ const ThreejsOLD = () => {
   };
 
   const rotate = [
-    { positionX: 0, positionY: -0.550, rotationY: Math.PI / 2, cameraZ: 5.5, duration: 500 },
-    { positionX: 0, positionY: -0.550, rotationY: Math.PI, cameraZ: 5.5, duration: 500 },
-    { positionX: 0, positionY: -0.550, rotationY: Math.PI * 2, cameraZ: 5.5, duration: 500 }
+    { positionX: 0, positionY: -0.550, rotationY: 0, cameraZ: 5.5, duration: 3000 },
+    // { positionX: 0, positionY: -0.550, rotationY: Math.PI, cameraZ: 5.5, duration: 500 },
+    { positionX: 0, positionY: -0.550, rotationY: Math.PI * 2, cameraZ: 5.5, duration: 1500 }
   ]
 
   const keyframes0 = [
@@ -1230,13 +1234,20 @@ const ThreejsOLD = () => {
 
   const keyframes3 = [
     { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 15, duration: 1000 },
-    { positionX: 1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 13, duration: 1000 },
-    { positionX: -1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 10, duration: 500 },
+    { positionX: 1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 13, duration: 400 },
+    { positionX: -1, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 10, duration: 800 },
     { positionX: 0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 8, duration: 1000 },
-    { positionX: -0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 6.5, duration: 1000 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 500 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: -Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
+    { positionX: -0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 6.5, duration: 500 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: -Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 300 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 300 },
+  ];
+
+  const keyframes4 = [
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 15, cameraRotationZ: 0, duration: 900 },
+    { positionX: 0, positionY: 0.1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5, cameraRotationZ: Math.PI / 4, duration: 5000 },
+    { positionX: 0, positionY: -1, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5, cameraRotationZ: Math.PI / 4, duration: 1000 },
+    { positionX: 0, positionY: -0.55, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 1000 },
   ];
 
 
@@ -1432,6 +1443,7 @@ const ThreejsOLD = () => {
   //   requestAnimationFrame(animate);
   // };
 
+
   const rotateModel0 = (keyframes, shouldRecord = false) => {
     if (!modelRef.current || !cameraRef.current || !rendererRef.current) return;
 
@@ -1465,19 +1477,26 @@ const ThreejsOLD = () => {
 
       const originalWidth = rendererRef.current.domElement.width;
       const originalHeight = rendererRef.current.domElement.height;
-
+      let originalBackground;
+      if (transparentBG) {
+        originalBackground = sceneRef.current.background;
+      }
       const resolution = {
         'HD': { width: 1920, height: 1080 },
         '2K': { width: 2560, height: 1440 },
         '4K': { width: 3840, height: 2160 },
+
+        '16:9': { width: 1600, height: 900 },
+        '1:1': { width: 1080, height: 1080 },
+        '4:3': { width: 1600, height: 1200 },
+        '21:9': { width: 2560, height: 1080 },
+        '9:16': { width: 1080, height: 1920 },
       };
 
       let selectedRes = resolution[selectedResolution];
 
       //custom resolution
       // selectedRes = { width: 5000, height: 5000 };
-
-
 
       rendererRef.current.setSize(selectedRes.width, selectedRes.height);
       cameraRef.current.aspect = selectedRes.width / selectedRes.height;
@@ -1496,6 +1515,10 @@ const ThreejsOLD = () => {
 
       mediaRecorder.onstop = () => {
 
+        if (transparentBG && originalBackground) {
+          sceneRef.current.background = originalBackground;
+        }
+
         rendererRef.current.setSize(originalWidth, originalHeight);
         cameraRef.current.aspect = originalWidth / originalHeight;
         cameraRef.current.updateProjectionMatrix();
@@ -1511,7 +1534,10 @@ const ThreejsOLD = () => {
         a.click();
         URL.revokeObjectURL(url);
       };
-
+      if (transparentBG) {
+        sceneRef.current.background = null;
+        rendererRef.current.setClearColor(0x000000, 0);
+      }
       mediaRecorder.start();
     }
 
@@ -1592,15 +1618,12 @@ const ThreejsOLD = () => {
     //   mediaRecorder.start();
     // }
 
-
     const animate = (currentTime) => {
       const elapsedTime = currentTime - startTime;
-
 
       let currentFrameIndex = 0;
       let timeInAnimation = elapsedTime;
 
-      // Calculate which keyframe we're currently in
       while (timeInAnimation > 0 && currentFrameIndex < keyframes.length - 1) {
         const frameDuration = keyframes[currentFrameIndex].duration || 3000;
         if (timeInAnimation < frameDuration) break;
@@ -1608,9 +1631,8 @@ const ThreejsOLD = () => {
         currentFrameIndex++;
       }
 
-      // If we've reached the end of the animation
       if (currentFrameIndex >= keyframes.length - 1) {
-        // Reset to initial state
+
         setTimeout(() => {
           cameraRef.current.position.copy(initialState.camera.position);
           cameraRef.current.rotation.copy(initialState.camera.rotation);
@@ -1621,7 +1643,7 @@ const ThreejsOLD = () => {
             mediaRecorder.stop();
           }
           setIsAnimating(false);
-        }, 300);
+        }, 1000);
         return;
       }
 
@@ -1629,12 +1651,13 @@ const ThreejsOLD = () => {
       const nextFrame = keyframes[currentFrameIndex + 1];
       const frameDuration = currentFrame.duration || 3000;
 
-      // Calculate progress within current frame
-      const frameProgress = Math.min(timeInAnimation / frameDuration, 1);
+      const frameProgre = Math.min(timeInAnimation / frameDuration, 1);
+      const easeInOutQuad = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
-      // Interpolate all properties
+      const frameProgress = easeInOutQuad(frameProgre);
+
       if (currentFrame && nextFrame) {
-        // Model position
+
         modelRef.current.position.x = THREE.MathUtils.lerp(
           currentFrame.positionX || 0,
           nextFrame.positionX || 0,
@@ -1651,7 +1674,7 @@ const ThreejsOLD = () => {
           frameProgress
         );
 
-        // Model rotation
+
         modelRef.current.rotation.y = THREE.MathUtils.lerp(
           currentFrame.rotationY || 0,
           nextFrame.rotationY || 0,
@@ -1668,14 +1691,14 @@ const ThreejsOLD = () => {
           frameProgress
         );
 
-        // Camera position
+
         cameraRef.current.position.z = THREE.MathUtils.lerp(
           currentFrame.cameraZ || 5.5,
           nextFrame.cameraZ || 5.5,
           frameProgress
         );
 
-        // Camera rotation
+
         if (currentFrame.cameraRotationX !== undefined) {
           cameraRef.current.rotation.x = THREE.MathUtils.lerp(
             currentFrame.cameraRotationX,
@@ -1849,29 +1872,7 @@ const ThreejsOLD = () => {
     }
   };
 
-  // const handleBackgroundImageChange = (event) => {
-  //   const file = event.target.files[0]; 
 
-  //   if (file) {
-  //     const reader = new FileReader();
-  //     let imagehigh = 0;
-  //     let imagewidth = 0;
-  //     reader.onload = function (e) {
-  //       const texture = new THREE.TextureLoader().load(e.target.result, (texture) => {
-  //         imagehigh = texture.image.height;
-  //         imagewidth = texture.image.width;
-  //       });
-  //       texture.needsUpdate = true;
-
-  //       texture.a
-
-  //       texture.colorSpace = THREE.SRGBColorSpace;
-
-  //       sceneRef.current.background = texture;
-  //     };
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
 
   const handleBackgroundImageChange = (event) => {
     const file = event.target.files[0];
@@ -1913,62 +1914,86 @@ const ThreejsOLD = () => {
   };
 
 
-  //  const handleWatermarkImageChange = (event) => {
-  //     const file = event.target.files[0];
-  //     if (!file) return;
-    
-  //     const reader = new FileReader();
-  //     reader.onload = function (e) {
-  //       const watermarkTexture = new THREE.TextureLoader().load(e.target.result, (texture) => {
-  //         const material = new THREE.MeshPhysicalMaterial({
-  //           map: texture,
-  //           transparent: true, 
-  //           opacity: 0.23,
-  //           depthWrite: false,
-  //           depthTest: false,
-  //           alphaTest: 0.0,          
+  // const handleWatermarkImageChange = (event) => {
+  //   const file = event.target.files[0];
+  //   if (!file) return;
+
+  //   const reader = new FileReader();
+  //   reader.onload = function (e) {
+  //     const watermarkTexture = new THREE.TextureLoader().load(e.target.result, (texture) => {
+  //       const material = new THREE.MeshPhysicalMaterial({
+  //         map: texture,
+  //         transparent: true,
+  //         opacity: 0.23,
+  //         depthWrite: false,
+  //         depthTest: false,
+  //         alphaTest: 0.0,
   //       });
   //       // const geometry = new THREE.PlaneGeometry(cameraRef.current.aspect * 4, 4);
-  //       const geometry = new THREE.PlaneGeometry(1,1);
+  //       const geometry = new THREE.PlaneGeometry(1, 1);
+
   //       const mesh = new THREE.Mesh(geometry, material);
   //       mesh.position.set(0, 0, -2);
   //       // mesh.scale.set(1, 1, 1);
   //       // sceneRef.current.add(mesh);
   //       cameraRef.current.add(mesh);
-  //       console.log(cameraRef.current);
-  //       });
-  //     };
-  //     reader.readAsDataURL(file);
+  //       sceneRef.current.add(cameraRef.current);
+  //     });
   //   };
+  //   reader.readAsDataURL(file);
+
+  // };
+
 
   const handleWatermarkImageChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
-        const texture = new THREE.TextureLoader().load(e.target.result, (texture) => {
-            const spriteMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
-                opacity: 0.23,
-                // depthTest: false,
-                // depthWrite: false
-            });
-
-            const sprite = new THREE.Sprite(spriteMaterial);
-            
-            const imageAspect = texture.image.width / texture.image.height;
-            sprite.scale.set(imageAspect, imageAspect, 1);
-            
-            // Position in front of camera
-            sprite.position.set(0, 0, -2.2);
-            
-            cameraRef.current.add(sprite);
+    reader.onload = function (e) {
+      const texture = new THREE.TextureLoader().load(e.target.result, (loadedTexture) => {
+        const material = new THREE.MeshPhysicalMaterial({
+          map: loadedTexture,
+          transparent: true,
+          opacity: 0.25,
+          depthWrite: false,
+          depthTest: false,
+          alphaTest: 0.0,
         });
+
+        const gridSize = 5; // Number of rows and columns
+        const spacing = 1; // Spacing between planes
+
+        for (let row = 0; row < gridSize; row++) {
+          for (let col = 0; col < gridSize; col++) {
+            const geometry = new THREE.PlaneGeometry(1, 1);
+
+            const positions = geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+              const x = positions[i];
+              const y = positions[i + 1];
+              // positions[i + 2] = Math.sin(x * 5) * Math.cos(y * 5) * 0.5;
+              positions[i + 2] = -5
+            }
+            geometry.attributes.position.needsUpdate = true;
+            geometry.computeVertexNormals();
+
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Position each plane in a grid
+            mesh.position.set(
+              col * spacing - (gridSize * spacing) / 2,
+              row * spacing - (gridSize * spacing) / 2,
+              -2 // Distance from the camera
+            );
+            cameraRef.current.add(mesh);
+            // sceneRef.current.add(mesh);
+          }
+        }
+      });
     };
     reader.readAsDataURL(file);
-};
+  };
 
   return (
     <>
@@ -2369,7 +2394,15 @@ const ThreejsOLD = () => {
               <option value="HD">HD (1080p)</option>
               <option value="2K">2K</option>
               <option value="4K">4K</option>
+              <option value="16:9">16:9</option>
+              <option value="1:1">1:1</option>
+              <option value="4:3">4:3</option>
+              <option value="21:9">21:9</option>
+              <option value="9:16">9:16</option>
             </select>
+
+            <button onClick={() => setTransparentBG(!transparentBG)}
+            >Transparent Background {transparentBG ? 'True' : 'False'} </button>
 
             <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
               <button
@@ -2442,6 +2475,20 @@ const ThreejsOLD = () => {
                 onClick={() => rotateModel0(keyframes3, true)} // Record and download
                 style={{ padding: "10px", flex: "1" }}>
                 Download Animation 4
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes4, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 5
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes4, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 5
               </button>
             </div>
 
