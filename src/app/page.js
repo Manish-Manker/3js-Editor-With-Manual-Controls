@@ -1239,15 +1239,24 @@ const ThreejsOLD = () => {
     { positionX: 0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 8, duration: 1000 },
     { positionX: -0.6, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 6.5, duration: 500 },
     { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: -Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 300 },
-    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 300 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: -Math.PI / 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 500 },
+    { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, duration: 1000 },
   ];
 
   const keyframes4 = [
     { positionX: 0, positionY: -0.5, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 15, cameraRotationZ: 0, duration: 900 },
     { positionX: 0, positionY: 0.1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5, cameraRotationZ: Math.PI / 4, duration: 5000 },
-    { positionX: 0, positionY: -1, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5, cameraRotationZ: Math.PI / 4, duration: 1000 },
+    { positionX: 0, positionY: -1, positionZ: 0, rotationY: Math.PI*2, rotationX: 0, rotationZ: 0, cameraZ: 5, cameraRotationZ: Math.PI / 4, duration: 400 },
     { positionX: 0, positionY: -0.55, positionZ: 0, rotationY: Math.PI * 2, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 1000 },
+  ];
+
+    const keyframes5 = [
+    { positionX: 0, positionY: 1, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 300 },
+    { positionX: 0, positionY: -0.7, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 400 },
+    { positionX: 0, positionY: 0, positionZ: 0, rotationY: -Math.PI/5, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 500 },
+    { positionX: 0, positionY: -0.7, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 300 },
+    { positionX: 0, positionY: -0.4, positionZ: 0, rotationY: -Math.PI/8, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 300 },
+    { positionX: 0, positionY: -0.7, positionZ: 0, rotationY: 0, rotationX: 0, rotationZ: 0, cameraZ: 5.5, cameraRotationZ: 0, duration: 200 }
   ];
 
 
@@ -1881,33 +1890,64 @@ const ThreejsOLD = () => {
     const reader = new FileReader();
     reader.onload = function (e) {
       const texture = new THREE.TextureLoader().load(e.target.result, (loadedTexture) => {
+        // const scene = sceneRef.current;
+
+        // loadedTexture.matrixAutoUpdate = true;
+        // loadedTexture.minFilter = THREE.LinearFilter;
+        // loadedTexture.magFilter = THREE.LinearFilter;
+
+        // loadedTexture.center.set(0.5,0.5);
+
+        // const imageAspect = loadedTexture.image.width / loadedTexture.image.height;
+        // const screenAspect = window.innerWidth / window.innerHeight;
+
+        // if (imageAspect > screenAspect) {
+        //   loadedTexture.repeat.set(screenAspect / imageAspect, 1);
+        // } else {
+        //   loadedTexture.repeat.set(1, imageAspect / screenAspect);
+        // }
+
+
+        // loadedTexture.offset.set(
+        //   (1 - loadedTexture.repeat.x) / 2,
+        //   (1 - loadedTexture.repeat.y) / 2
+        // );
+
+        // loadedTexture.needsUpdate = true;
+        // loadedTexture.colorSpace = THREE.SRGBColorSpace;
+
+        // scene.background = loadedTexture;
+
         const scene = sceneRef.current;
+            const renderer = rendererRef.current; // Assuming you have a ref to your renderer
+ 
+            loadedTexture.matrixAutoUpdate = true;
+            loadedTexture.minFilter = THREE.LinearFilter;
+            loadedTexture.magFilter = THREE.LinearFilter;
+ 
+            const imageAspect = loadedTexture.image.width / loadedTexture.image.height;
+ 
+            // ✅ Use actual canvas size instead of window size
+            const canvas = renderer.domElement;
+            const screenAspect = canvas.clientWidth / canvas.clientHeight;
+ 
+            if (imageAspect > screenAspect) {
+                loadedTexture.repeat.set(screenAspect / imageAspect, 1);
+            } else {
+                loadedTexture.repeat.set(1, imageAspect / screenAspect);
+            }
+ 
+            loadedTexture.offset.set(
+                (1 - loadedTexture.repeat.x) / 2,
+                (1 - loadedTexture.repeat.y) / 2
+            );
+ 
+            loadedTexture.needsUpdate = true;
+            loadedTexture.colorSpace = THREE.SRGBColorSpace;
+ 
+            scene.background = loadedTexture;
 
-        loadedTexture.matrixAutoUpdate = true;
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
 
-        loadedTexture.center.set(0.5, 0.5);
-
-        const imageAspect = loadedTexture.image.width / loadedTexture.image.height;
-        const screenAspect = window.innerWidth / window.innerHeight;
-
-        if (imageAspect > screenAspect) {
-          loadedTexture.repeat.set(screenAspect / imageAspect, 1);
-        } else {
-          loadedTexture.repeat.set(1, imageAspect / screenAspect);
-        }
-
-
-        loadedTexture.offset.set(
-          (1 - loadedTexture.repeat.x) / 2,
-          (1 - loadedTexture.repeat.y) / 2
-        );
-
-        loadedTexture.needsUpdate = true;
-        loadedTexture.colorSpace = THREE.SRGBColorSpace;
-
-        scene.background = loadedTexture;
       });
     };
     reader.readAsDataURL(file);
@@ -1945,55 +1985,55 @@ const ThreejsOLD = () => {
   // };
 
 
-  const handleWatermarkImageChange = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  // const handleWatermarkImageChange = (event) => {
+  //   const file = event.target.files[0];
+  //   if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const texture = new THREE.TextureLoader().load(e.target.result, (loadedTexture) => {
-        const material = new THREE.MeshPhysicalMaterial({
-          map: loadedTexture,
-          transparent: true,
-          opacity: 0.25,
-          depthWrite: false,
-          depthTest: false,
-          alphaTest: 0.0,
-        });
+  //   const reader = new FileReader();
+  //   reader.onload = function (e) {
+  //     const texture = new THREE.TextureLoader().load(e.target.result, (loadedTexture) => {
+  //       const material = new THREE.MeshPhysicalMaterial({
+  //         map: loadedTexture,
+  //         transparent: true,
+  //         opacity: 0.25,
+  //         depthWrite: false,
+  //         depthTest: false,
+  //         alphaTest: 0.0,
+  //       });
 
-        const gridSize = 5; // Number of rows and columns
-        const spacing = 1; // Spacing between planes
+  //       const gridSize = 5; // Number of rows and columns
+  //       const spacing = 1; // Spacing between planes
 
-        for (let row = 0; row < gridSize; row++) {
-          for (let col = 0; col < gridSize; col++) {
-            const geometry = new THREE.PlaneGeometry(1, 1);
+  //       for (let row = 0; row < gridSize; row++) {
+  //         for (let col = 0; col < gridSize; col++) {
+  //           const geometry = new THREE.PlaneGeometry(1, 1);
 
-            const positions = geometry.attributes.position.array;
-            for (let i = 0; i < positions.length; i += 3) {
-              const x = positions[i];
-              const y = positions[i + 1];
-              // positions[i + 2] = Math.sin(x * 5) * Math.cos(y * 5) * 0.5;
-              positions[i + 2] = -5
-            }
-            geometry.attributes.position.needsUpdate = true;
-            geometry.computeVertexNormals();
+  //           const positions = geometry.attributes.position.array;
+  //           for (let i = 0; i < positions.length; i += 3) {
+  //             const x = positions[i];
+  //             const y = positions[i + 1];
+  //             // positions[i + 2] = Math.sin(x * 5) * Math.cos(y * 5) * 0.5;
+  //             positions[i + 2] = -5
+  //           }
+  //           geometry.attributes.position.needsUpdate = true;
+  //           geometry.computeVertexNormals();
 
-            const mesh = new THREE.Mesh(geometry, material);
+  //           const mesh = new THREE.Mesh(geometry, material);
 
-            // Position each plane in a grid
-            mesh.position.set(
-              col * spacing - (gridSize * spacing) / 2,
-              row * spacing - (gridSize * spacing) / 2,
-              -2 // Distance from the camera
-            );
-            cameraRef.current.add(mesh);
-            // sceneRef.current.add(mesh);
-          }
-        }
-      });
-    };
-    reader.readAsDataURL(file);
-  };
+  //           // Position each plane in a grid
+  //           mesh.position.set(
+  //             col * spacing - (gridSize * spacing) / 2,
+  //             row * spacing - (gridSize * spacing) / 2,
+  //             -2 // Distance from the camera
+  //           );
+  //           cameraRef.current.add(mesh);
+  //           // sceneRef.current.add(mesh);
+  //         }
+  //       }
+  //     });
+  //   };
+  //   reader.readAsDataURL(file);
+  // };
 
   return (
     <>
@@ -2041,7 +2081,7 @@ const ThreejsOLD = () => {
           <br></br>
           <br></br>
 
-          <label>
+          {/* <label>
             Select watermark Image :
             <input
               type="file"
@@ -2049,7 +2089,7 @@ const ThreejsOLD = () => {
               onChange={handleWatermarkImageChange}
               style={{ marginBottom: "10px" }}
             />
-          </label>
+          </label> */}
 
           <div style={{ marginBottom: "10px" }}>
             <label>
@@ -2489,6 +2529,20 @@ const ThreejsOLD = () => {
                 onClick={() => rotateModel0(keyframes4, true)} // Record and download
                 style={{ padding: "10px", flex: "1" }}>
                 Download Animation 5
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+              <button
+                onClick={() => rotateModel0(keyframes5, false)} // Don't record
+                style={{ padding: "10px", flex: "1" }}
+                disabled={isAnimating}>
+                Animation 6
+              </button>
+              <button
+                onClick={() => rotateModel0(keyframes5, true)} // Record and download
+                style={{ padding: "10px", flex: "1" }}>
+                Download Animation 6
               </button>
             </div>
 
